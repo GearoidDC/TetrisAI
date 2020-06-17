@@ -270,7 +270,6 @@ def draw_window(surface):
     pygame.draw.rect(surface, (255, 0, 0), (top_left_x, top_left_y, play_width, play_height), 5)
     # pygame.display.update()
 
-
 def main():
     global grid
     pygame.display.set_caption('Tetris')
@@ -284,7 +283,7 @@ def main():
     next_piece = get_shape()
     clock = pygame.time.Clock()
     fall_time = 0
-
+    adder = True
     while run:
 
         fall_speed = 0.27
@@ -329,6 +328,12 @@ def main():
                     if not valid_space(current_piece, grid):
                         current_piece.y -= 1
 
+                if event.key == pygame.K_SPACE:
+                    while valid_space(current_piece, grid):
+                        current_piece.y += 1
+                    current_piece.y -= 1
+                    print(convert_shape_format(current_piece))
+
             pos = pygame.mouse.get_pos()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if return_button.isover(pos):
@@ -339,12 +344,6 @@ def main():
                     return_button.color = (61, 97, 128)
                 else:
                     return_button.color = (147, 150, 153)
-
-                '''if event.key == pygame.K_SPACE:
-                    while valid_space(current_piece, grid):
-                        current_piece.y += 1
-                    current_piece.y -= 1
-                    print(convert_shape_format(current_piece))'''  # todo fix
 
         shape_pos = convert_shape_format(current_piece)
 
@@ -365,6 +364,18 @@ def main():
 
             # call four times to check for multiple clear rows
             clear_rows(grid, locked_positions)
+
+            for j in range(10):
+                for i in range(4,20):
+                    if (j,i) in locked_positions:
+                        locked_positions[j,i-1] = locked_positions[j,i]
+                    else:
+                        locked_positions[j,i-1] = (0,0,0)
+            lines_sent = random.sample(range(10), 9)
+            for g in range(10):
+                locked_positions[g,19] = (0, 0, 0)
+            for r in lines_sent:
+                locked_positions[r,19] = (0, 255, 0)
 
         draw_window(screen)
         draw_next_shape(next_piece, screen)
