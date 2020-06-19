@@ -230,6 +230,7 @@ def clear_rows(grid, locked):
                     continue
     if inc > 0:
         linessss = inc
+        print(inc)
         for key in sorted(list(locked), key=lambda x: x[1])[::-1]:
             x, y = key
             if y < ind:
@@ -381,7 +382,7 @@ def main():
             change_piece = False
 
             # call four times to check for multiple clear rows
-            counter_ai = clear_rows(grid_ai, locked_positions)
+            counter_ai += clear_rows(grid_ai, locked_positions)
             # Adds a row and moves rows up
             while counter_human > 0:
                 counter_human = counter_human - 1
@@ -405,7 +406,7 @@ def main():
             change_piece_human = False
 
             # call four times to check for multiple clear rows
-            counter_human = clear_rows(grid_human, locked_positions_human)
+            counter_human += clear_rows(grid_human, locked_positions_human)
             # Adds a row and moves rows up
             while counter_ai > 0:
                 counter_ai = counter_ai - 1
