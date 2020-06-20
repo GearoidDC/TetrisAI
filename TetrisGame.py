@@ -256,7 +256,19 @@ def draw_next_shape(shape, surface,position):
     surface.blit(label, (sx + 10, sy- 30))
 
 
-def draw_window(surface, label, position, grid):
+def draw_lines_sent(surface, col,sx):
+
+    sy = top_left_y
+    for i in range(col):
+        pygame.draw.line(surface, (128,128,128), (sx - 40, sy+ i*15 + play_height/2), (sx - 20, sy + i * 15 + play_height/2))   # horizontal lines
+
+    pygame.draw.line(surface, (128,128,128), (sx - 40, sy + play_height/2), (sx - 40 , sy + play_height))  # vertical lines
+    pygame.draw.line(surface, (128,128,128), (sx - 20, sy + play_height/2), (sx - 20 , sy + play_height))
+
+
+
+
+def draw_window(surface, label, position, grid, lines_sent):
 
     # Tetris Title
 
@@ -268,6 +280,9 @@ def draw_window(surface, label, position, grid):
 
     # draw grid and border
     draw_grid(surface, 20, 10,position)
+    for line in range(lines_sent):
+        pygame.draw.rect(surface, (0,128,128), (position - 40, 685 - line * 15, 20, 15), 0)
+    draw_lines_sent(surface, 20, position)
     pygame.draw.rect(surface, (255, 0, 0), (position, top_left_y, play_width, play_height), 5)
     # pygame.display.update()
 
@@ -422,8 +437,8 @@ def main():
                     locked_positions_human[r,19] = (169,169,169)
 
         screen.fill((0,0,0))
-        draw_window(screen,label_ai,top_left_x,grid_ai)
-        draw_window(screen,label_human,top_right_x,grid_human)
+        draw_window(screen,label_ai,top_left_x,grid_ai, counter_human)
+        draw_window(screen,label_human,top_right_x,grid_human, counter_ai)
         draw_next_shape(next_piece, screen,top_left_x)
         draw_next_shape(next_piece_human, screen,top_right_x)
         return_button.draw(screen)
