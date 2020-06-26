@@ -302,6 +302,7 @@ def main():
     change_piece_human = False
     run = True
     win = False
+    lose = False
     current_piece = get_shape()
     next_piece = get_shape()
     current_piece_human = get_shape()
@@ -400,18 +401,19 @@ def main():
             counter_ai += clear_rows(grid_ai, locked_positions)
             # Adds a row and moves rows up
             while counter_human > 0:
-                counter_human = counter_human - 1
                 for j in range(10):
                     for i in range(20):
                         if (j,i) in locked_positions:
-                            locked_positions[j,i-1] = locked_positions[j,i]
+                            locked_positions[j,i-counter_human] = locked_positions[j,i]
                             del locked_positions[j,i]
                 lines_sent = random.sample(range(10), 9)
-                for g in range(10):
-                    locked_positions[g,19] = (0, 0, 0)
-                for r in lines_sent:
-                    locked_positions[r,19] = (169,169,169)
-
+                for x in range(counter_human):
+                    for g in range(10):
+                        locked_positions[g,19-x] = (0, 0, 0)
+                for x in range(counter_human):
+                    for r in lines_sent:
+                        locked_positions[r,19-x] = (169,169,169)
+                counter_human = 0;
         if change_piece_human:
             for pos in shape_pos_human:
                 p = (pos[0], pos[1])
@@ -447,16 +449,23 @@ def main():
         # Check if user lost
         if check_lost(locked_positions_human):
             run = False
+            lose = True
         if check_lost(locked_positions):
             run = False
             win = True
 
     if win:
         draw_text_middle("You Win", 40, (255,255,255), screen)
-    else:
+        pygame.display.update()
+        pygame.time.delay(2000)
+        main()
+    if lose:
         draw_text_middle("You Lost", 40, (255,255,255), screen)
-    pygame.display.update()
-    pygame.time.delay(2000)
+        pygame.display.update()
+        pygame.time.delay(2000)
+        main()
+
+
 
 
 def main_menu():
