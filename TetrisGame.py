@@ -14,7 +14,7 @@ pygame.font.init()
 s_width = 1400
 s_height = 700
 play_width = 300  # meaning 300 // 10 = 30 width per block
-play_height = 600  # meaning 600 // 20 = 20 height per blo ck
+play_height = 600  # meaning 600 // 20 = 20 height per block
 block_size = 30
 
 top_left_x = (s_width - play_width) // 5
@@ -192,10 +192,14 @@ def check_lost(positions):
     return False
 
 
-def get_shape():
+def get_shapes():
     global shapes, shape_colors
+    bar = random.sample(range(0, 7), 7)
+    bag = []
+    for i in range(7):
+        bag.append(Piece(5, 0, shapes[bar[i]]))
 
-    return Piece(5, 0, random.choice(shapes))
+    return bag
 
 
 def draw_text_middle(text, size, color, surface):
@@ -266,8 +270,6 @@ def draw_lines_sent(surface, col,sx):
     pygame.draw.line(surface, (128,128,128), (sx - 20, sy + play_height/2), (sx - 20 , sy + play_height))
 
 
-
-
 def draw_window(surface, label, position, grid, lines_sent):
 
     # Tetris Title
@@ -286,30 +288,30 @@ def draw_window(surface, label, position, grid, lines_sent):
     pygame.draw.rect(surface, (255, 0, 0), (position, top_left_y, play_width, play_height), 5)
     # pygame.display.update()
 
+
 def main():
     pygame.display.set_caption('Tetris')
     screen = pygame.display.set_mode((s_width, s_height))
     locked_positions = {}  # (x,y):(255,0,0)
     locked_positions_human = {}
-    grid_ai = create_grid(locked_positions)
-    grid_human = create_grid(locked_positions_human)
     font = pygame.font.SysFont('comicsans', 60)
     label_ai = font.render('AI Player', 1, (255,255,255))
     label_human = font.render('Human Player', 1, (255,255,255))
     counter_ai = 0
     counter_human = 0
+    bag_ai = get_shapes()
+    bag_human = get_shapes()
     change_piece = False
     change_piece_human = False
     run = True
     win = False
     lose = False
-    current_piece = get_shape()
-    next_piece = get_shape()
-    current_piece_human = get_shape()
-    next_piece_human = get_shape()
+    current_piece = bag_ai.pop()
+    next_piece = bag_ai.pop()
+    current_piece_human = bag_human.pop()
+    next_piece_human = bag_human.pop()
     clock = pygame.time.Clock()
     fall_time = 0
-    adder = True
     while run:
 
         fall_speed = 0.27
@@ -330,7 +332,25 @@ def main():
             if not (valid_space(current_piece_human, grid_human)) and current_piece_human.y > 0:
                 current_piece_human.y -= 1
                 change_piece_human = True
-
+            ai_move = random.randint(0, 4)
+            if ai_move == 0:
+                current_piece.x -= 1
+                if not valid_space(current_piece, grid_ai):
+                    current_piece.x += 1
+            elif ai_move == 1:
+                current_piece.x += 1
+                if not valid_space(current_piece, grid_ai):
+                    current_piece.x -= 1
+            elif ai_move == 2:
+                current_piece.rotation = current_piece.rotation + 1 % len(current_piece.shape)
+                if not valid_space(current_piece, grid_ai):
+                    current_piece.x -= 1
+                    if not valid_space(current_piece, grid_ai):
+                        current_piece.x += 2
+                        if not valid_space(current_piece, grid_ai):
+                            current_piece.x += -1
+                            current_piece.rotation = current_piece.rotation - 1 % len(
+                                current_piece.shape)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -351,7 +371,12 @@ def main():
                     # rotate shape
                     current_piece_human.rotation = current_piece_human.rotation + 1 % len(current_piece_human.shape)
                     if not valid_space(current_piece_human, grid_human):
-                        current_piece_human.rotation = current_piece_human.rotation - 1 % len(current_piece_human.shape)
+                        current_piece_human.x -= 1
+                        if not valid_space(current_piece_human, grid_human):
+                            current_piece_human.x += 2
+                            if not valid_space(current_piece_human, grid_human):
+                                current_piece_human.x += -1
+                                current_piece_human.rotation = current_piece_human.rotation - 1 % len(current_piece_human.shape)
 
                 if event.key == pygame.K_DOWN:
                     # move shape down
@@ -394,7 +419,9 @@ def main():
                 p = (pos[0], pos[1])
                 locked_positions[p] = current_piece.color
             current_piece = next_piece
-            next_piece = get_shape()
+            next_piece = bag_ai.pop()
+            if not bag_ai:
+                bag_ai = get_shapes()
             change_piece = False
 
             # call four times to check for multiple clear rows
@@ -413,13 +440,15 @@ def main():
                 for x in range(counter_human):
                     for r in lines_sent:
                         locked_positions[r,19-x] = (169,169,169)
-                counter_human = 0;
+                counter_human = 0
         if change_piece_human:
             for pos in shape_pos_human:
                 p = (pos[0], pos[1])
                 locked_positions_human[p] = current_piece_human.color
             current_piece_human = next_piece_human
-            next_piece_human = get_shape()
+            next_piece_human = bag_human.pop()
+            if not bag_human:
+                bag_human = get_shapes()
             change_piece_human = False
 
             # call four times to check for multiple clear rows
@@ -464,24 +493,3 @@ def main():
         pygame.display.update()
         pygame.time.delay(2000)
         main()
-
-
-
-
-def main_menu():
-    run = True
-    screen = pygame.display.set_mode((s_width, s_height))
-    pygame.display.set_caption('Tetris')
-    while run:
-        screen.fill((0,0,0))
-        draw_text_middle('Press any key to begin.', 60, (255, 255, 255), screen)
-        pygame.display.update()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-
-            if event.type == pygame.KEYDOWN:
-                main()
-    pygame.quit()
-
-
