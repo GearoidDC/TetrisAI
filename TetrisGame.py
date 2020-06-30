@@ -323,15 +323,6 @@ def main():
 
         # PIECE FALLING CODE
         if fall_time/1000 >= fall_speed:
-            fall_time = 0
-            current_piece.y += 1
-            current_piece_human.y += 1
-            if not (valid_space(current_piece, grid_ai)) and current_piece.y > 0:
-                current_piece.y -= 1
-                change_piece = True
-            if not (valid_space(current_piece_human, grid_human)) and current_piece_human.y > 0:
-                current_piece_human.y -= 1
-                change_piece_human = True
             ai_move = random.randint(0, 4)
             if ai_move == 0:
                 current_piece.x -= 1
@@ -351,6 +342,16 @@ def main():
                             current_piece.x += -1
                             current_piece.rotation = current_piece.rotation - 1 % len(
                                 current_piece.shape)
+            fall_time = 0
+            current_piece.y += 1
+            current_piece_human.y += 1
+            if not (valid_space(current_piece, grid_ai)) and current_piece.y > 0:
+                current_piece.y -= 1
+                change_piece = True
+            if not (valid_space(current_piece_human, grid_human)) and current_piece_human.y > 0:
+                current_piece_human.y -= 1
+                change_piece_human = True
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False

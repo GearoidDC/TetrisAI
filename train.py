@@ -9,14 +9,14 @@ import torch.nn as nn
 from tensorboardX import SummaryWriter
 
 from DeepQLearning import DeepQNetwork
-import TetrisGame
+from tetris import Tetris
 from collections import deque
 
 
 def get_args():
     parser = argparse.ArgumentParser(
         """Implementation of Deep Q Network to play Tetris""")
-    parser.add_argument("--width", type=int, default=30, help="The common width for all images")
+    parser.add_argument("--width", type=int, default=10, help="The common width for all images")
     parser.add_argument("--height", type=int, default=20, help="The common height for all images")
     parser.add_argument("--block_size", type=int, default=30, help="Size of a block")
     parser.add_argument("--batch_size", type=int, default=512, help="The number of images per batch")
@@ -45,7 +45,7 @@ def train(opt):
         shutil.rmtree(opt.log_path)
     os.makedirs(opt.log_path)
     writer = SummaryWriter(opt.log_path)
-    env = TetrisGame
+    env = Tetris(width=opt.width, height=opt.height, block_size=opt.block_size)
     model = DeepQNetwork()
     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
     criterion = nn.MSELoss()

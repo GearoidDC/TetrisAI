@@ -2,6 +2,7 @@ import pygame
 import sys
 import Button
 import TetrisGame
+import TetrisPlay
 
 pygame.init()
 
@@ -25,7 +26,10 @@ while 1:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if train_ai_button.isover(pos):
                 print("Train AI")
-                mode = 1
+                gameplay = TetrisPlay.Tetris()
+                gameplay.main()
+                size = width, height = 450, 600
+                screen = pygame.display.set_mode(size)
             if play_vs_ai_button.isover(pos):
                 print("Play vs AI")
                 TetrisGame.main()
