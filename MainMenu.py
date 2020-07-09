@@ -27,7 +27,7 @@ while 1:
             if train_ai_button.isover(pos):
                 print("Train AI")
                 gameplay = TetrisPlay.Tetris()
-                gameplay.main()
+                gameplay.start_up()
                 size = width, height = 450, 600
                 screen = pygame.display.set_mode(size)
             if play_vs_ai_button.isover(pos):
