@@ -159,11 +159,9 @@ class Tetris:
         self.counter_human = 0
         self.bag_ai = self.get_shapes()
         self.change_piece = False
-        self.win = False
-        self.lose = False
         self.current_piece = self.bag_ai.pop()
         self.next_piece = self.bag_ai.pop()
-        self.clock = pygame.time.Clock()
+        #self.clock = pygame.time.Clock()
         self.fall_time = 0
         self.score = 0
         self.total_pieces_placed = 0
@@ -171,6 +169,11 @@ class Tetris:
         self.last_score = 0
         self.top_score = 0
         self.move = 0
+        self.height = 20
+        self.maxheight = 20
+        self.height_increase = False
+        self.gap_score = 0
+        self.end_score = 0
 
         self.top_left_x = (self.s_width - self.play_width) // 5
         self.top_left_y = self.s_height - self.play_height -10
@@ -212,15 +215,31 @@ class Tetris:
             if pos not in accepted_positions:
                 if pos[1] > -1:
                     return False
+                elif pos[0] > 9:
+                    return False
+                elif pos[0] < 0:
+                    return False
 
         return True
 
+    def check_gaps(self, shape, grid):
+        accepted_positions = [[(j, i) for j in range(10) if grid[i][j] == (0, 0, 0)] for i in range(20)]
+        accepted_positions = [j for sub in accepted_positions for j in sub]
+        formatted = self.convert_shape_format(shape)
+        number_of_gaps = 0
+        for pos in formatted:
+            if pos in accepted_positions:
+                number_of_gaps += 1
+
+        return number_of_gaps
 
     def check_lost(self,positions):
         for pos in positions:
             x, y = pos
             if y < 0:
                 return True
+            elif y < self.maxheight:
+                self.maxheight = y
         return False
 
 
@@ -273,6 +292,37 @@ class Tetris:
                     newKey = (x, y + inc)
                     locked[newKey] = locked.pop(key)
         return linessss
+
+    def bumpiness(self, grid):
+        array_of_bump_heights = [20,20,20,20,20,20,20,20,20,20]
+        average_bumps = 0
+
+        shape_pos = self.convert_shape_format(self.current_piece)
+        # add piece to the grid for drawing
+
+        for i in range(len(grid)):
+            for j in range(len(grid[i])):
+                if grid[i][j] != (0, 0, 0) and i < array_of_bump_heights[j] and (j,i) != shape_pos[0] and (j,i) != shape_pos[1] and (j,i) != shape_pos[2] and (j,i) != shape_pos[3]:
+                    array_of_bump_heights[j] = i
+
+        for i in range(0,9):
+            average_bumps = average_bumps + abs(array_of_bump_heights[i] - array_of_bump_heights[i+1])
+        return average_bumps
+
+    def holes(self, grid):
+        holes = 0
+        average_height = 0
+        shape_pos = self.convert_shape_format(self.current_piece)
+        for j in range(len(grid[0])):
+            covered = False
+            for i in range(len(grid)):
+                if grid[i][j] == (0,0,0) and covered == True:
+                    holes = holes + 1
+                elif grid[i][j] != (0, 0, 0) and (j,i) != shape_pos[0] and (j,i) != shape_pos[1] and (j,i) != shape_pos[2] and (j,i) != shape_pos[3] and covered == False:
+                    covered = True
+                    average_height = average_height + i
+        average_height = average_height/10
+        return holes, average_height
 
 
     def draw_next_shape(self,shape, surface,position):
@@ -333,16 +383,18 @@ class Tetris:
         self.counter_human = 0
         self.bag_ai = self.get_shapes()
         self.change_piece = False
-        self.win = False
-        self.lose = False
         self.current_piece = self.bag_ai.pop()
         self.next_piece = self.bag_ai.pop()
-        self.clock = pygame.time.Clock()
+        #self.clock = pygame.time.Clock()
         self.fall_time = 0
         self.score = 0
         self.total_pieces_placed = 0
         self.run = True
         self.move = 0
+        self.height = 20
+        self.maxheight = 20
+        self.total_lines_cleared =0
+        self.end_score = 0
 
     def draw_stats(self):
         font = pygame.font.SysFont('comicsans', 30)
@@ -353,8 +405,8 @@ class Tetris:
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y - 20))
         label = font.render(f'Score = {self.score}', 1, (255, 255, 255))
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 10))
-        label = font.render(f'Iterations left = {self.iterations}', 1, (255, 255, 255))
-        self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 30))
+        # label = font.render(f'Iterations left = {self.iterations}', 1, (255, 255, 255))
+        # self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 30))
         label = font.render(f'Last Score = {self.last_score}', 1, (255, 255, 255))
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 50))
         label = font.render(f'Top Score = {self.top_score}', 1, (255, 255, 255))
@@ -362,6 +414,9 @@ class Tetris:
 
     def score(self):
         return self.score
+
+
+
 
     def start_up(self):
         go = True
@@ -383,26 +438,30 @@ class Tetris:
             pygame.display.update()
         self.main(True)
 
-    def main(self, ai_move=0,):
+    def main(self, ai_move=0,draw=False):
         if not self.run:
             self.reset()
-        fall_speed = 0.1
+        #fall_speed = 0.1
         reward = 0
         self.move = self.move + 1
 
         grid_ai = self.create_grid(self.locked_positions)
-        self.fall_time += self.clock.get_rawtime()
-        human_reaction_time = 0.05
-        self.clock.tick()
-
+        #self.fall_time += self.clock.get_rawtime()
+        #human_reaction_time = 0.05
+        #self.clock.tick()
+        move_reward = 0
         if ai_move[1] == 1:
             self.current_piece.x -= 1
             if not self.valid_space(self.current_piece, grid_ai):
                 self.current_piece.x += 1
+            else:
+                move_reward = -10
         elif ai_move[2] == 1:
             self.current_piece.x += 1
             if not self.valid_space(self.current_piece, grid_ai):
                 self.current_piece.x -= 1
+            else:
+                move_reward = -10
         elif ai_move[3] == 1:
             self.current_piece.rotation = self.current_piece.rotation + 1 % len(self.current_piece.shape)
             if not self.valid_space(self.current_piece, grid_ai):
@@ -413,27 +472,32 @@ class Tetris:
                         self.current_piece.x += -1
                         self.current_piece.rotation = self.current_piece.rotation - 1 % len(
                             self.current_piece.shape)
+            move_reward = -10
         if ai_move[4] == 1:
             # move shape down
             self.current_piece.y += 1
             if not self.valid_space(self.current_piece, grid_ai):
                 self.current_piece.y -= 1
+            else:
+                move_reward = -10
 
         if ai_move[5] == 1:
             while self.valid_space(self.current_piece, grid_ai):
                 self.current_piece.y += 1
             self.current_piece.y -= 1
+            move_reward = -10
 
         # PIECE FALLING CODE
         if self.move == 2:
             self.move = 0
-            self.fall_time = 0
+            #self.fall_time = 0
             self.current_piece.y += 1
             if not (self.valid_space(self.current_piece, grid_ai)) and self.current_piece.y > 0:
                 self.current_piece.y -= 1
                 self.change_piece = True
-
         for event in pygame.event.get():
+
+            """
             if event.type == pygame.QUIT:
                 self.run = False
                 pygame.display.quit()
@@ -449,39 +513,47 @@ class Tetris:
                     self.return_button.color = (61, 97, 128)
                 else:
                     self.return_button.color = (147, 150, 153)
-
+            """
         shape_pos = self.convert_shape_format(self.current_piece)
         # add piece to the grid for drawing
         for i in range(len(shape_pos)):
             x, y = shape_pos[i]
             if y > -1:
                 grid_ai[y][x] = self.current_piece.color
-
+        self.gap_score = 0
         # IF PIECE HIT GROUND
+        lines_cleared = 0
+        line_placed = 0
+        self.height_increase = False
         if self.change_piece:
+            self.current_piece.y += 1
+            # self.gap_score = self.check_gaps(self.current_piece, grid_ai) * 40
+            self.current_piece.y -= 1
+            line_placed = 1
             self.total_pieces_placed += 1
             for pos in shape_pos:
                 p = (pos[0], pos[1])
+                self.height = pos[1]
                 self.locked_positions[p] = self.current_piece.color
+            if self.height < self.maxheight:
+                self.height_increase = True
             self.current_piece = self.next_piece
             self.next_piece = self.bag_ai.pop()
             if not self.bag_ai:
                 self.bag_ai = self.get_shapes()
             self.change_piece = False
-            reward = reward + self.total_pieces_placed
+
             if self.check_lost(self.locked_positions):
                 self.run = False
-                self.lose = True
-                reward = reward - 20
-                self.last_score = reward
-                if self.top_score < reward:
-                    self.top_score = reward
+
             if self.run == True:
                 # call four times to check for multiple clear rows
                 self.counter_ai += self.clear_rows(grid_ai, self.locked_positions)
                 self.score += self.counter_ai
                 self.total_lines_cleared += self.counter_ai
-                reward = 100 * self.total_lines_cleared
+                self.maxheight =self.maxheight + self.counter_ai
+                lines_cleared = self.counter_ai
+                self.end_score = self.end_score + self.counter_ai ** 2
                 self.counter_ai = 0
                 # Adds a row and moves rows up
                 while self.counter_human > 0:
@@ -498,15 +570,27 @@ class Tetris:
                         for r in lines_sent:
                             self.locked_positions[r,19-x] = (169,169,169)
                     self.counter_human = 0
-        self.score = reward
+
+        bump_factor = self.bumpiness(grid_ai)
+        holes, aggrete_height = self.holes(grid_ai)
+        #if self.height_increase:
+        #    reward = (lines_cleared * 1000) - 10 * line_placed - self.gap_score - bump_factor * 2 - holes * 2
+        #else:
+        #reward = lines_cleared * 0.760666 - line_placed * bump_factor * 0.184483 - line_placed * holes * 0.35663 - aggrete_height * line_placed * 0.510066
+        reward = line_placed + (lines_cleared ** 2) * 10
+        if self.run == False:
+            self.last_score = self.total_lines_cleared * 100 + self.total_pieces_placed
+            if self.top_score < self.total_lines_cleared * 100 + self.total_pieces_placed:
+                self.top_score = self.total_lines_cleared * 100 + self.total_pieces_placed
+        self.score += reward
         self.screen.fill((0,0,0))
         self.draw_window(self.screen,self.label_ai,self.top_left_x,grid_ai, self.counter_human)
         self.draw_next_shape(self.next_piece, self.screen,self.top_left_x)
-        self.return_button.draw(self.screen)
+        #self.return_button.draw(self.screen)
         self.draw_stats()
         pygame.display.update()
 
-        image_data = pygame.surfarray.array3d(pygame.display.get_surface())
+        image_data = pygame.surfarray.array3d(pygame.display.get_surface())[120:420,90:690]
         return image_data, reward, self.run
 
 

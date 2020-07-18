@@ -200,7 +200,18 @@ class Tetris:
 
     def step(self, action, render=True, video=None):
         x, num_rotations = action
-        self.current_pos = {"x": x, "y": 0}
+        self.current_pos = {"x": 5, "y": 1}
+        if x <= 5:
+            for z in range(5-x):
+                self.current_pos["x"] = z
+                if render:
+                    self.render(video)
+        if x > 5:
+            for z in range(x-5):
+                self.current_pos["x"] = z
+                if render:
+                    self.render(video)
+
         for _ in range(num_rotations):
             self.piece = self.rotate(self.piece)
 

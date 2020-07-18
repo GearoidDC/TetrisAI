@@ -9,7 +9,7 @@ import torch.nn as nn
 from tensorboardX import SummaryWriter
 
 from DeepQLearning import DeepQNetwork
-from tetris import Tetris
+from TetrisPlayNN import Tetris
 from collections import deque
 
 
@@ -80,15 +80,15 @@ def train(opt):
         next_state = next_states[index, :]
         action = next_actions[index]
 
-        reward, done = env.step(action, render=True)
+        reward, done = env.step(action)
 
         if torch.cuda.is_available():
             next_state = next_state.cuda()
         replay_memory.append([state, reward, next_state, done])
         if done:
-            final_score = env.score
-            final_tetrominoes = env.tetrominoes
-            final_cleared_lines = env.cleared_lines
+            final_score = env.last_score
+            final_tetrominoes = env.total_pieces_placed
+            final_cleared_lines = env.total_lines_cleared
             state = env.reset()
             if torch.cuda.is_available():
                 state = state.cuda()
