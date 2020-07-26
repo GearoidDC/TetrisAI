@@ -4,3 +4,6 @@ if self.lose and self.iterations > 0:
     pygame.time.delay(500)
     self.iterations = self.iterations - 1
     self.main()
+
+    x, y = pygame.mouse.get_pos()
+    print(x, y)

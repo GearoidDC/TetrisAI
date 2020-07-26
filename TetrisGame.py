@@ -220,8 +220,8 @@ def draw_grid(surface, row, col, sx):
 def clear_rows(grid, locked):
     # need to see if row is clear the shift every other row above down one
     linessss = 0
-    i = len(grid)-1
-    while i > 0:
+    i = 0
+    while i < len(grid) - 1:
         row = grid[i]
         if (0, 0, 0) not in row:
             inc = 1
@@ -234,15 +234,14 @@ def clear_rows(grid, locked):
                 except:
                     continue
             if inc > 0:
-                print(inc)
                 for key in sorted(list(locked), key=lambda x: x[1])[::-1]:
                     x, y = key
                     if y < ind:
                         newKey = (x, y + 1)
                         locked[newKey] = locked.pop(key)
-                        grid = create_grid(locked)
+                grid = create_grid(locked)
         else:
-            i = i - 1
+            i = i + 1
     return linessss
 
 
@@ -291,6 +290,10 @@ def draw_window(surface, label, position, grid, lines_sent):
     pygame.draw.rect(surface, (255, 0, 0), (position, top_left_y, play_width, play_height), 5)
     # pygame.display.update()
 
+
+def start():
+    main()
+    return True
 
 def main():
     pygame.display.set_caption('Tetris')

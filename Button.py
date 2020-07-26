@@ -2,13 +2,14 @@ import pygame
 
 
 class Button:
-    def __init__(self, color, x, y, button_width, button_height, text=''):
+    def __init__(self, color, x, y, button_width, button_height, text='', call=None):
         self.color = color
         self.x = x
         self.y = y
         self.width = button_width
         self.height = button_height
         self.text = text
+        self.call = call
 
     def draw(self, win, outline=None):
         # Call this method to draw the button on the screen
@@ -30,3 +31,6 @@ class Button:
                 return True
 
         return False
+
+    def pointto(self):
+        return self.call

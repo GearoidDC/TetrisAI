@@ -2,6 +2,8 @@ import argparse
 import os
 import shutil
 from random import random, randint, sample
+import pygame
+import Button
 
 import numpy as np
 import torch
@@ -9,11 +11,12 @@ import torch.nn as nn
 from tensorboardX import SummaryWriter
 
 from DeepQLearning import DeepQNetwork
-from TetrisPlayNN import Tetris
+from TetrisTrainCheater import Tetris as Cheater
+from TetrisTrainFair import Tetris as Fair
 from collections import deque
 
 
-def get_args():
+def get_args(training_type):
     parser = argparse.ArgumentParser(
         """Implementation of Deep Q Network to play Tetris""")
     parser.add_argument("--width", type=int, default=10, help="The common width for all images")
@@ -24,19 +27,29 @@ def get_args():
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--initial_epsilon", type=float, default=1)
     parser.add_argument("--final_epsilon", type=float, default=1e-3)
-    parser.add_argument("--num_decay_epochs", type=float, default=2000)
-    parser.add_argument("--num_epochs", type=int, default=3000)
-    parser.add_argument("--save_interval", type=int, default=1000)
-    parser.add_argument("--replay_memory_size", type=int, default=30000,
-                        help="Number of epoches between testing phases")
-    parser.add_argument("--log_path", type=str, default="tensorboard")
-    parser.add_argument("--saved_path", type=str, default="trained_models")
+
+    if training_type == "cheater":
+        parser.add_argument("--num_decay_epochs", type=float, default=2000)
+        parser.add_argument("--num_epochs", type=int, default=3000)
+        parser.add_argument("--save_interval", type=int, default=1000)
+        parser.add_argument("--replay_memory_size", type=int, default=30000,
+                            help="Number of epoches between testing phases")
+        parser.add_argument("--log_path", type=str, default="tensorboard")
+        parser.add_argument("--saved_path", type=str, default="trained_models")
+    elif training_type == "fair":
+        parser.add_argument("--num_decay_epochs", type=float, default=3000)
+        parser.add_argument("--num_epochs", type=int, default=5000)
+        parser.add_argument("--save_interval", type=int, default=1000)
+        parser.add_argument("--replay_memory_size", type=int, default=100000,
+                            help="Number of epoches between testing phases")
+        parser.add_argument("--log_path", type=str, default="tensorboard")
+        parser.add_argument("--saved_path", type=str, default="trained_models")
 
     args = parser.parse_args()
     return args
 
 
-def train(opt):
+def train(opt, training_type, number_of_features):
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
     else:
@@ -45,8 +58,12 @@ def train(opt):
         shutil.rmtree(opt.log_path)
     os.makedirs(opt.log_path)
     writer = SummaryWriter(opt.log_path)
-    env = Tetris()
-    model = DeepQNetwork()
+    screen = pygame.display.set_mode((1400, 700))
+    if training_type == "fair":
+        env = Fair(screen)
+    else:
+        env = Cheater(screen)
+    model = DeepQNetwork(number_of_features)
     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
     criterion = nn.MSELoss()
 
@@ -57,6 +74,9 @@ def train(opt):
 
     replay_memory = deque(maxlen=opt.replay_memory_size)
     epoch = 0
+    max_steps = 2500
+    steps = 0
+    return_button = Button.Button((61, 97, 128), 575, 625, 200, 50, 'Return')
     while epoch < opt.num_epochs:
         next_steps = env.get_next_states()
         # Exploration or exploitation
@@ -79,16 +99,36 @@ def train(opt):
 
         next_state = next_states[index, :]
         action = next_actions[index]
-
+        steps = steps + 1
         reward, done = env.step(action)
 
         if torch.cuda.is_available():
             next_state = next_state.cuda()
         replay_memory.append([state, reward, next_state, done])
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.display.quit()
+                quit()
+            pos = pygame.mouse.get_pos()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if return_button.isover(pos):
+                    writer.close()
+                    return True
+            if event.type == pygame.MOUSEMOTION:
+                if return_button.isover(pos):
+                    return_button.color = (61, 97, 128)
+                else:
+                    return_button.color = (147, 150, 153)
+        return_button.draw(screen)
+        pygame.display.update()
+        if steps >= max_steps:
+            done = True
         if done:
+            steps = 0
             final_score = env.last_score
             final_tetrominoes = env.total_pieces_placed
             final_cleared_lines = env.total_lines_cleared
+            max_combo = env.max_combo
             state = env.reset()
             if torch.cuda.is_available():
                 state = state.cuda()
@@ -124,23 +164,26 @@ def train(opt):
         loss.backward()
         optimizer.step()
 
-        print("Epoch: {}/{}, Action: {}, Score: {}, Tetrominoes {}, Cleared lines: {}".format(
+        print("Epoch: {}/{}, Action: {}, Score: {}, Tetrominoes {}, Cleared lines: {}, Max Combo: {}".format(
             epoch,
             opt.num_epochs,
             action,
             final_score,
             final_tetrominoes,
-            final_cleared_lines))
+            final_cleared_lines,
+            max_combo))
         writer.add_scalar('Train/Score', final_score, epoch - 1)
         writer.add_scalar('Train/Tetrominoes', final_tetrominoes, epoch - 1)
         writer.add_scalar('Train/Cleared lines', final_cleared_lines, epoch - 1)
 
         if epoch > 0 and epoch % opt.save_interval == 0:
-            torch.save(model, "{}/tetris_{}".format(opt.saved_path, epoch))
+            torch.save(model, "{}/{}_tetris_{}".format(opt.saved_path, training_type, epoch))
 
     torch.save(model, "{}/tetris".format(opt.saved_path))
+    writer.close()
 
 
-if __name__ == "__main__":
-    opt = get_args()
-    train(opt)
+def main(training_type, number_of_features):
+    opt = get_args(training_type)
+    train(opt, training_type, number_of_features)
+    return True

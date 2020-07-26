@@ -1,83 +1,58 @@
 import pygame
 import sys
 import Button
-import TetrisGame
-import TetrisPlay
+import TrainingSelectionScreen
+import VsSelectionScreen
+import os
+from Settings import Setting
 
 pygame.init()
 
-size = width, height = 450, 600
-speed = [1, 1]
-black = 71, 73, 74
+# Centres the screen
+os.environ['SDL_VIDEO_CENTERED'] = '1'
 
+# Default Settings
+settings = Setting()
+screen_width = settings.screen_width
+screen_height = settings.screen_height
+size = settings.screen_width, settings.screen_height
+dark_grey = settings.screen_colour
+screen_centre = screen_width/2
 screen = pygame.display.set_mode(size)
+button_colour_off = settings.button_colour_off
+button_colour_on = settings.button_colour_on
+button_width = settings.button_width
+button_height = settings.button_height
+button_centred = screen_centre - button_width/2
 
+# Creating menu buttons
+train_ai_button = Button.Button(button_colour_off, button_centred, 100, button_width, button_height, 'Train AI')
+play_vs_ai_button = Button.Button(button_colour_off, button_centred, 250, button_width, button_height, 'Play Vs AI')
+quit_button = Button.Button(button_colour_off, button_centred, 400, button_width, button_height, 'Quit')
 
-train_ai_button = Button.Button((61, 97, 128), 100, 100, 250, 100, 'Train AI')
-play_vs_ai_button = Button.Button((61, 97, 128), 100, 250, 250, 100, 'Play Vs AI')
-quit_button = Button.Button((61, 97, 128), 100, 400, 250, 100, 'Quit')
+# Array of Buttons
+buttons = [train_ai_button, play_vs_ai_button, quit_button]
 
-mode = 0
-while 1:
+while True:
     for event in pygame.event.get():
         pos = pygame.mouse.get_pos()
-        if event.type == pygame.QUIT: sys.exit()
-
+        if event.type == pygame.QUIT:
+            sys.exit()
         if event.type == pygame.MOUSEBUTTONDOWN:
             if train_ai_button.isover(pos):
-                print("Train AI")
-                gameplay = TetrisPlay.Tetris()
-                gameplay.start_up()
-                size = width, height = 450, 600
-                screen = pygame.display.set_mode(size)
+                TrainingSelectionScreen.main()
             if play_vs_ai_button.isover(pos):
-                print("Play vs AI")
-                TetrisGame.main()
-                size = width, height = 450, 600
-                screen = pygame.display.set_mode(size)
+                VsSelectionScreen.main()
             if quit_button.isover(pos):
-                print("Quit")
                 sys.exit()
         if event.type == pygame.MOUSEMOTION:
-            if train_ai_button.isover(pos):
-                train_ai_button.color = (61, 97, 128)
-            else:
-                train_ai_button.color = (147, 150, 153)
-            if play_vs_ai_button.isover(pos):
-                play_vs_ai_button.color = (61, 97, 128)
-            else:
-                play_vs_ai_button.color = (147, 150, 153)
-            if quit_button.isover(pos):
-                quit_button.color = (61, 97, 128)
-            else:
-                quit_button.color = (147, 150, 153)
-
-    screen.fill(black)
-    train_ai_button.draw(screen)
-    play_vs_ai_button.draw(screen)
-    quit_button.draw(screen)
-    pygame.display.update()
-    if mode == 1:
-        size = width, height = 1200, 600
-        screen = pygame.display.set_mode(size)
-        return_button = Button.Button((61, 97, 128), 975, 525, 200, 50, 'Return')
-    while mode == 1:
-
-        for event in pygame.event.get():
-            pos = pygame.mouse.get_pos()
-            if event.type == pygame.QUIT: sys.exit()
-
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if return_button.isover(pos):
-                    print("Return")
-                    mode = 0
-                    size = width, height = 450, 600
-                    screen = pygame.display.set_mode(size)
-            if event.type == pygame.MOUSEMOTION:
-                if return_button.isover(pos):
-                    return_button.color = (61, 97, 128)
+            for x in range(len(buttons)):
+                if buttons[x].isover(pos):
+                    buttons[x].color = button_colour_on
                 else:
-                    return_button.color = (147, 150, 153)
-        screen.fill(black)
-        return_button.draw(screen)
-        pygame.display.update()
+                    buttons[x].color = button_colour_off
+
+    screen.fill(dark_grey)
+    for x in range(len(buttons)):
+        buttons[x].draw(screen)
+    pygame.display.update()
