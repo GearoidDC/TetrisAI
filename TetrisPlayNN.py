@@ -498,7 +498,6 @@ class Tetris:
         self.change_piece = False
         self.current_piece = self.bag_ai.pop()
         self.next_piece = self.bag_ai.pop()
-        # self.clock = pygame.time.Clock()
         self.fall_time = 0
         self.score = 0
         self.total_pieces_placed = 0

@@ -19,8 +19,8 @@ button_height = settings.button_height
 button_centred = screen_centre - button_width/2
 
 
-def start(screen,saved_path="fair_tetris"):
-    return_button = Button.Button(button_colour_off, 575, 625, 200, 50, 'Return')
+def start(screen, saved_path="fair_tetris"):
+    return_button = Button.Button(button_colour_off, 625, 625, 150, 50, 'Return')
     pygame.display.set_caption(saved_path)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
@@ -31,7 +31,7 @@ def start(screen,saved_path="fair_tetris"):
     else:
         model = torch.load("trained_models/{}".format(saved_path), map_location=lambda storage, loc: storage)
     model.eval()
-    if (saved_path == "fair_tetris"):
+    if saved_path == "fair_tetris":
         env = Fair(screen)
     else:
         env = Cheater(screen)
@@ -43,12 +43,13 @@ def start(screen,saved_path="fair_tetris"):
     fall_speed = 0.27
     clock = pygame.time.Clock()
     screen.fill((0, 0, 0))
-    reward = 0
     human_lines = 0
     holder = 0
     lost = False
     won = False
     run = True
+    env.step([4, 0], holder)
+    pygame.display.update()
     while run:
 
         for event in pygame.event.get():
@@ -92,11 +93,10 @@ def start(screen,saved_path="fair_tetris"):
             predictions = model(next_states)[:, 0]
             index = torch.argmax(predictions).item()
             action = next_actions[index]
-            reward, won = env.step(action,holder)
+            reward, won = env.step(action, holder)
             holder = 0
             if reward > 0:
-                lost, human_lines = human_tetris.main(-1,reward)
-                reward = 0
+                lost, human_lines = human_tetris.main(-1, reward)
                 if human_lines > 0:
                     holder += human_lines
                     human_lines = 0
@@ -106,7 +106,6 @@ def start(screen,saved_path="fair_tetris"):
         pygame.display.update()
 
         if won or lost:
-            screen.fill((0, 0, 0))
             run = display(won,lost,screen)
             screen.fill((0, 0, 0))
             env.reset()
@@ -122,11 +121,11 @@ def gravity():
     red = ""
 
 
-def display(win,lose,screen):
+def display(win, lose, screen):
 
-    pygame.draw.rect(screen, (0, 128, 128), (1400/2- 200, 200, 400, 300), 0)
-    play_again_button = Button.Button((61, 97, 128), 525, 300, 350, 50, 'Play Again?')
-    selection_menu_button = Button.Button((61, 97, 128), 525, 400, 350, 50, 'Selection Menu')
+    pygame.draw.rect(screen, (0, 128, 128), (1400/2 - 200, 200, 400, 300), 0)
+    play_again_button = Button.Button(button_colour_off, 525, 300, 350, 50, 'Play Again?')
+    selection_menu_button = Button.Button(button_colour_off, 525, 400, 350, 50, 'Selection Menu')
     if win:
         draw_text_middle("You Win", 40, (255, 255, 255), screen)
         pygame.display.update()
@@ -154,7 +153,7 @@ def display(win,lose,screen):
             selection_menu_button.draw(screen)
             pygame.display.update()
     if lose:
-        draw_text_middle("You Lose", 40, (255,255,255), screen)
+        draw_text_middle("You Lose", 40, (255, 255, 255), screen)
         pygame.display.update()
         while True:
             for event in pygame.event.get():

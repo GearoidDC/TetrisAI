@@ -155,8 +155,6 @@ class Tetris:
         self.top_score = 0
         self.move = 0
         self.height = 20
-        self.maxheight = 20
-        self.height_increase = False
         self.end_score = 0
         self.combo = 0
         self.max_combo = 0
@@ -221,8 +219,6 @@ class Tetris:
             x, y = pos
             if y < 0:
                 return True
-            elif y < self.maxheight:
-                self.maxheight = y
         return False
 
     def get_shapes(self):
@@ -485,7 +481,6 @@ class Tetris:
         self.run = False
         self.move = 0
         self.height = 20
-        self.maxheight = 20
         self.total_lines_cleared = 0
         self.end_score = 0
         grid_ai = self.create_grid(self.locked_positions)
@@ -537,7 +532,6 @@ class Tetris:
         # IF PIECE HIT GROUND
         lines_cleared = 0
         line_placed = 0
-        self.height_increase = False
         if self.change_piece:
             self.current_piece.y += 1
             self.current_piece.y -= 1
@@ -547,8 +541,6 @@ class Tetris:
                 p = (pos[0], pos[1])
                 self.height = pos[1]
                 self.locked_positions[p] = self.current_piece.color
-            if self.height < self.maxheight:
-                self.height_increase = True
             self.current_piece = self.next_piece
             self.next_piece = self.bag_ai.pop()
             if not self.bag_ai:
@@ -559,11 +551,9 @@ class Tetris:
                 self.run = True
 
             if self.run == False:
-                # call four times to check for multiple clear rows
                 self.counter_ai += self.clear_rows(grid_ai, self.locked_positions)
                 self.score += self.counter_ai
                 self.total_lines_cleared += self.counter_ai
-                self.maxheight = self.maxheight + self.counter_ai
                 lines_cleared = self.counter_ai
                 self.end_score = self.end_score + self.counter_ai ** 2
                 self.counter_ai = 0
