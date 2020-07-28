@@ -267,7 +267,6 @@ class Tetris:
                     grid[i][j] = (0, 0, 0)
         if inc > 0:
             for x in range(len(array) - 1, -1, -1):
-                # print(array[x])
                 for i in range(array[x], 0, -1):
                     for j in range(len(grid[array[x]])):
                         grid[i][j] = grid[i - 1][j]
@@ -281,7 +280,6 @@ class Tetris:
         height = 0
 
         # add piece to the grid for drawing
-
         for i in range(len(grid)):
             for j in range(len(grid[i])):
                 if grid[i][j] != (0, 0, 0) and i < array_of_bump_heights[j]:
@@ -300,9 +298,9 @@ class Tetris:
         for j in range(len(grid[0])):
             covered = False
             for i in range(len(grid)):
-                if grid[i][j] == (0, 0, 0) and covered == True:
+                if grid[i][j] == (0, 0, 0) and covered is True:
                     holes = holes + 1
-                elif grid[i][j] != (0, 0, 0) and covered == False:
+                elif grid[i][j] != (0, 0, 0) and covered is False:
                     covered = True
                     average_height = average_height + i
         return holes
@@ -313,9 +311,9 @@ class Tetris:
 
         sx = position + self.play_width + 50
         sy = self.top_left_y + self.play_height / 2 - 100
-        format = shape.shape[shape.rotation % len(shape.shape)]
+        shape_layout = shape.shape[shape.rotation % len(shape.shape)]
 
-        for i, line in enumerate(format):
+        for i, line in enumerate(shape_layout):
             row = list(line)
             for j, column in enumerate(row):
                 if column == '0':
@@ -491,6 +489,7 @@ class Tetris:
         return self.get_state_properties(grid_ai)
 
     def draw_stats(self):
+        self.screen.fill((0, 0, 0))
         font = pygame.font.SysFont('comicsans', 30)
 
         label = font.render(f'Total Lines cleared = {self.total_lines_cleared}', 1, (255, 255, 255))
@@ -506,7 +505,7 @@ class Tetris:
         label = font.render(f'Top Score = {self.top_score}', 1, (255, 255, 255))
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 70))
 
-    def step(self, action=[0, 0], lines_sent=0):
+    def step(self, action=[0, 0], lines_sent=0,draw=False):
         area = pygame.Rect(self.top_left_x - 50, self.top_left_y, 550, 700)
         small_area = pygame.Rect(self.top_left_x - 50, self.top_left_y + 100, 400, 600)
         self.counter_human += lines_sent
@@ -627,19 +626,20 @@ class Tetris:
                     self.counter_human = 0
 
         score = 1 * line_placed + (lines_cleared ** 2) * 10
-        if self.run == True:
+        if self.run:
             self.last_score = self.total_lines_cleared * 100 + self.total_pieces_placed
             if self.top_score < self.total_lines_cleared * 100 + self.total_pieces_placed:
                 self.top_score = self.total_lines_cleared * 100 + self.total_pieces_placed
         self.score += score
-        draw = False
-        self.screen.fill((0, 0, 0), area)
         if draw:
             self.draw_stats()
+        else:
+            self.screen.fill((0, 0, 0), area)
 
         self.draw_window(self.screen, self.top_left_x, grid_ai, self.counter_human)
         self.draw_next_shape(self.next_piece, self.screen, self.top_left_x)
         self.draw_title(self.screen, self.label, self.top_left_x)
-        pygame.display.update(area)
+        if not draw:
+            pygame.display.update(area)
 
         return lines_cleared, self.run

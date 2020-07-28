@@ -21,10 +21,14 @@ play_vs_cheater_ai_button = Button.Button(button_colour_off, button_centred, 100
                                           button_width, button_height, 'Play Vs Cheater AI')
 play_vs_fair_ai_button = Button.Button(button_colour_off, button_centred, 250,
                                        button_width, button_height, 'Play Vs Fair AI')
+solo_cheater_ai_button = Button.Button(button_colour_off, button_centred+450, 100,
+                                          150, button_height, 'Watch')
+solo_fair_ai_button = Button.Button(button_colour_off, button_centred+450, 250,
+                                       150, button_height, 'Watch')
 return_button = Button.Button(button_colour_off, button_centred, 400, button_width, button_height, 'Return')
 
 # Array of Buttons
-buttons = [play_vs_cheater_ai_button, play_vs_fair_ai_button, return_button]
+buttons = [play_vs_cheater_ai_button, play_vs_fair_ai_button, return_button,solo_fair_ai_button,solo_cheater_ai_button]
 
 
 def main():
@@ -40,6 +44,10 @@ def main():
                     go = TetrisVsMode.start(screen, "cheater_tetris")
                 elif play_vs_fair_ai_button.isover(pos):
                     go = TetrisVsMode.start(screen, "fair_tetris")
+                elif solo_cheater_ai_button.isover(pos):
+                    go = TetrisVsMode.start(screen, "cheater_tetris","solo")
+                elif solo_fair_ai_button.isover(pos):
+                    go = TetrisVsMode.start(screen, "fair_tetris", "solo")
                 elif return_button.isover(pos):
                     go = False
             if event.type == pygame.MOUSEMOTION:

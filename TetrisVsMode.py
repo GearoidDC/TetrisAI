@@ -3,8 +3,8 @@ import TetrisGameHuman
 from Settings import Setting
 import torch
 import Button
-from TetrisPlay_Fair import Tetris as Fair
-from TetrisPlayNN import Tetris as Cheater
+from TetrisPlayFair import Tetris as Fair
+from TetrisPlayCheater import Tetris as Cheater
 
 # Default Settings
 settings = Setting()
@@ -19,7 +19,7 @@ button_height = settings.button_height
 button_centred = screen_centre - button_width/2
 
 
-def start(screen, saved_path="fair_tetris"):
+def start(screen, saved_path="fair_tetris",mode="vs"):
     return_button = Button.Button(button_colour_off, 625, 625, 150, 50, 'Return')
     pygame.display.set_caption(saved_path)
     if torch.cuda.is_available():
@@ -36,94 +36,126 @@ def start(screen, saved_path="fair_tetris"):
     else:
         env = Cheater(screen)
     env.reset()
-    human_tetris = TetrisGameHuman.Tetris(screen)
+
     if torch.cuda.is_available():
         model.cuda()
+    if mode == "vs":
+        human_tetris = TetrisGameHuman.Tetris(screen)
+        draw = False
     fall_time = 0
     fall_speed = 0.27
     clock = pygame.time.Clock()
     screen.fill((0, 0, 0))
+    pygame.display.update()
     human_lines = 0
     holder = 0
     lost = False
     won = False
     run = True
-    env.step([4, 0], holder)
-    pygame.display.update()
-    while run:
+    if mode == "vs":
+        while run:
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.display.quit()
-                quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    lost, human_lines = human_tetris.main(1)
-                elif event.key == pygame.K_RIGHT:
-                    lost, human_lines = human_tetris.main(2)
-                elif event.key == pygame.K_UP:
-                    lost, human_lines = human_tetris.main(3)
-                elif event.key == pygame.K_DOWN:
-                    lost, human_lines = human_tetris.main(4)
-                elif event.key == pygame.K_SPACE:
-                    lost, human_lines = human_tetris.main(5)
-            pos = pygame.mouse.get_pos()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if return_button.isover(pos):
-                    return True
-            if event.type == pygame.MOUSEMOTION:
-                if return_button.isover(pos):
-                    return_button.color = (61, 97, 128)
-                else:
-                    return_button.color = (147, 150, 153)
-        if human_lines > 0:
-            holder += human_lines
-            human_lines = 0
-        if fall_time / 1000 >= fall_speed:
-            fall_time = 0
-            lost, human_lines = human_tetris.main(0)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.display.quit()
+                    quit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        lost, human_lines = human_tetris.main(1)
+                    elif event.key == pygame.K_RIGHT:
+                        lost, human_lines = human_tetris.main(2)
+                    elif event.key == pygame.K_UP:
+                        lost, human_lines = human_tetris.main(3)
+                    elif event.key == pygame.K_DOWN:
+                        lost, human_lines = human_tetris.main(4)
+                    elif event.key == pygame.K_SPACE:
+                        lost, human_lines = human_tetris.main(5)
+                pos = pygame.mouse.get_pos()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if return_button.isover(pos):
+                        return True
+                if event.type == pygame.MOUSEMOTION:
+                    if return_button.isover(pos):
+                        return_button.color = (61, 97, 128)
+                    else:
+                        return_button.color = (147, 150, 153)
             if human_lines > 0:
                 holder += human_lines
                 human_lines = 0
-            next_steps = env.get_next_states()
-            next_actions, next_states = zip(*next_steps.items())
-            next_states = torch.stack(next_states)
-            if torch.cuda.is_available():
-                next_states = next_states.cuda()
-            predictions = model(next_states)[:, 0]
-            index = torch.argmax(predictions).item()
-            action = next_actions[index]
-            reward, won = env.step(action, holder)
-            holder = 0
-            if reward > 0:
-                lost, human_lines = human_tetris.main(-1, reward)
+            if fall_time / 1000 >= fall_speed:
+                fall_time = 0
+                lost, human_lines = human_tetris.main(0)
                 if human_lines > 0:
                     holder += human_lines
                     human_lines = 0
-        fall_time += clock.get_rawtime()
-        clock.tick()
-        return_button.draw(screen)
-        pygame.display.update()
+                reward, won = ai(env,model,holder,draw)
+                holder = 0
+                if reward > 0:
+                    lost, human_lines = human_tetris.main(-1, reward)
+                    if human_lines > 0:
+                        holder += human_lines
+                        human_lines = 0
+            fall_time += clock.get_rawtime()
+            clock.tick()
+            return_button.draw(screen)
+            pygame.display.update()
 
-        if won or lost:
-            run = display(won,lost,screen)
-            screen.fill((0, 0, 0))
-            env.reset()
-            human_tetris.reset()
-            lost = False
-            won = False
+            if won or lost:
+                return_button.color = (0, 0, 0)
+                return_button.draw(screen)
+                run = display(won, lost, screen)
+                screen.fill((0, 0, 0))
+                env.reset()
+                human_tetris.reset()
+                lost = False
+                won = False
+    else:
+        draw = True
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.display.quit()
+                    quit()
+                pos = pygame.mouse.get_pos()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if return_button.isover(pos):
+                        return True
+                if event.type == pygame.MOUSEMOTION:
+                    if return_button.isover(pos):
+                        return_button.color = (61, 97, 128)
+                    else:
+                        return_button.color = (147, 150, 153)
+            reward, won = ai(env, model, holder,draw)
+            return_button.draw(screen)
+            pygame.display.flip()
+            if won:
+                env.reset()
+
     return True
+
 
 def user_controls():
     red = ""
+
+def ai(env,model,holder,draw):
+    next_steps = env.get_next_states()
+    next_actions, next_states = zip(*next_steps.items())
+    next_states = torch.stack(next_states)
+    if torch.cuda.is_available():
+        next_states = next_states.cuda()
+    predictions = model(next_states)[:, 0]
+    index = torch.argmax(predictions).item()
+    action = next_actions[index]
+    reward, won = env.step(action, holder,draw)
+    return reward, won
+
 
 def gravity():
     red = ""
 
 
 def display(win, lose, screen):
-
-    pygame.draw.rect(screen, (0, 128, 128), (1400/2 - 200, 200, 400, 300), 0)
+    pygame.draw.rect(screen, dark_grey, (1400 / 2 - 200, 200, 400, 300), 0)
     play_again_button = Button.Button(button_colour_off, 525, 300, 350, 50, 'Play Again?')
     selection_menu_button = Button.Button(button_colour_off, 525, 400, 350, 50, 'Selection Menu')
     if win:
@@ -184,30 +216,4 @@ def draw_text_middle(text, size, color, screen):
     font = pygame.font.SysFont('comicsans', size, bold=True)
     label = font.render(text, 1, color)
 
-    screen.blit(label, (1400/2 - (label.get_width() / 2), 250 - label.get_height()/2))
-
-
-    def start_up(self):
-        go = True
-        self.iterations = 100
-        while go:
-            for event in pygame.event.get():
-                pos = pygame.mouse.get_pos()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if self.start_button.isover(pos):
-                        print("Start")
-                        go = False
-                if event.type == pygame.MOUSEMOTION:
-                    if self.start_button.isover(pos):
-                        self.start_button.color = (61, 97, 128)
-                    else:
-                        self.start_button.color = (147, 150, 153)
-            self.screen.fill((0, 0, 0))
-            self.start_button.draw(self.screen)
-            pygame.display.update()
-        self.main(True)
-
-
-#if __name__ == '__main__':
-#    screen = pygame.display.set_mode((1400, 700))
-#    start(screen)
+    screen.blit(label, (1400 / 2 - (label.get_width() / 2), 250 - label.get_height() / 2))
