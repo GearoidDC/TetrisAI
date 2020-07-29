@@ -32,8 +32,9 @@ quit_button = Button.Button(button_colour_off, button_centred, 400, button_width
 
 # Array of Buttons
 buttons = [train_ai_button, play_vs_ai_button, quit_button]
-
+pygame.display.set_caption("Tetris")
 while True:
+    # Creates responses to user inputs
     for event in pygame.event.get():
         pos = pygame.mouse.get_pos()
         if event.type == pygame.QUIT:
@@ -51,7 +52,7 @@ while True:
                     buttons[x].color = button_colour_on
                 else:
                     buttons[x].color = button_colour_off
-
+    # Refreshes screen and draws buttons
     screen.fill(dark_grey)
     for x in range(len(buttons)):
         buttons[x].draw(screen)

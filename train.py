@@ -11,8 +11,8 @@ import torch.nn as nn
 from tensorboardX import SummaryWriter
 
 from DeepQLearning import DeepQNetwork
-from TetrisTrainCheater import Tetris as Cheater
-from TetrisTrainFair import Tetris as Fair
+from TetrisCheater import Tetris as Cheater
+from TetrisFair import Tetris as Fair
 from collections import deque
 
 
@@ -58,9 +58,9 @@ def train(opt, training_type, number_of_features):
     writer = SummaryWriter(opt.log_path)
     screen = pygame.display.set_mode((1400, 700))
     if training_type == "fair":
-        env = Fair(screen)
+        env = Fair(screen,"train",True)
     else:
-        env = Cheater(screen)
+        env = Cheater(screen,"train",True)
     model = DeepQNetwork(number_of_features)
     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
     criterion = nn.MSELoss()

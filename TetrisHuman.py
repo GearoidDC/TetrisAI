@@ -5,15 +5,15 @@ pygame.font.init()
 
 
 class Piece(object):
-    rows = 20  # y
-    columns = 10  # x
 
-    def __init__(self, column, row, shape):
+    def __init__(self, column, row, shape, shapes):
+        shape_colors = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0), (255, 165, 0), (0, 0, 255),
+                        (128, 0, 128)]
         self.x = column
         self.y = row
         self.shape = shape
         self.color = shape_colors[shapes.index(shape)]
-        self.rotation = 0  # number from 0-3
+        self.rotation = 0
 
 
 class Tetris:
@@ -121,11 +121,6 @@ class Tetris:
           '..0..',
           '.....']]
 
-    global shapes, shape_colors
-    shape_colors = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0), (255, 165, 0), (0, 0, 255), (128, 0, 128)]
-    shapes = [S, Z, I, O, J, L, T]
-    # index 0 - 6 represent shape
-
     def __init__(self, screen):
         self.screen = screen
         self.s_width = 1400
@@ -136,7 +131,7 @@ class Tetris:
         self.top_left_y = self.s_height - self.play_height - 10
         self.shapes = [self.S, self.Z, self.I, self.O, self.J, self.L, self.T]
         font = pygame.font.SysFont('comicsans', 60)
-        self.label_human = font.render('Human Player', 1, (255, 255, 255))
+        self.label = font.render('Human Player', 1, (255, 255, 255))
 
         self.locked_positions = {}
         self.counter_ai = 0
@@ -147,13 +142,13 @@ class Tetris:
         self.change_piece = False
         self.run = False
 
-    def create_grid(self, locked_positions={}):
+    def create_grid(self):
         grid = [[(0, 0, 0) for x in range(10)] for x in range(20)]
 
         for i in range(len(grid)):
             for j in range(len(grid[i])):
-                if (j, i) in locked_positions:
-                    c = locked_positions[(j, i)]
+                if (j, i) in self.locked_positions:
+                    c = self.locked_positions[(j, i)]
                     grid[i][j] = c
         return grid
 
@@ -200,7 +195,7 @@ class Tetris:
         bar = random.sample(range(0, 7), 7)
         bag = []
         for i in range(7):
-            bag.append(Piece(5, 0, self.shapes[bar[i]]))
+            bag.append(Piece(5, 0, self.shapes[bar[i]], self.shapes))
 
         return bag
 
@@ -230,12 +225,12 @@ class Tetris:
                     except:
                         continue
                 if inc > 0:
-                    for key in sorted(list(locked), key=lambda x: x[1])[::-1]:
+                    for key in sorted(list(locked), key=lambda z: z[1])[::-1]:
                         x, y = key
                         if y < ind:
-                            newKey = (x, y + 1)
-                            locked[newKey] = locked.pop(key)
-                    grid = self.create_grid(locked)
+                            new_key = (x, y + 1)
+                            locked[new_key] = locked.pop(key)
+                    grid = self.create_grid()
             else:
                 i = i + 1
         return linessss
@@ -286,7 +281,7 @@ class Tetris:
         pygame.draw.rect(surface, (255, 0, 0), (position, self.top_left_y, self.play_width, self.play_height), 5)
 
     def reset(self):
-        self.locked_positions = {}  # (x,y):(255,0,0)
+        self.locked_positions = {}
         self.counter_ai = 0
         self.counter_human = 0
         self.bag = self.get_shapes()
@@ -295,19 +290,20 @@ class Tetris:
         self.change_piece = False
         self.run = False
 
-    def controls(self, movement,grid):
-
+    # User controls
+    def controls(self, movement, grid):
+        # Moves piece left
         if movement == 1:
             self.current_piece.x -= 1
             if not self.valid_space(self.current_piece, grid):
                 self.current_piece.x += 1
-
+        # Moves piece right
         elif movement == 2:
             self.current_piece.x += 1
             if not self.valid_space(self.current_piece, grid):
                 self.current_piece.x -= 1
+        # Rotates piece and deals with wall kicks
         elif movement == 3:
-            # rotate shape
             self.current_piece.rotation = self.current_piece.rotation + 1 % len(self.current_piece.shape)
             if not self.valid_space(self.current_piece, grid):
                 self.current_piece.x -= 1
@@ -317,14 +313,13 @@ class Tetris:
                         self.current_piece.x += -1
                         self.current_piece.rotation = self.current_piece.rotation - 1 % len(
                             self.current_piece.shape)
-
+        # Moves piece down 1
         elif movement == 4:
-            # move shape down
             self.current_piece.y += 1
             if not self.valid_space(self.current_piece, grid):
                 self.current_piece.y -= 1
                 return True
-
+        # Moves piece until down while in a valid spot
         elif movement == 5:
             if self.valid_space(self.current_piece, grid):
                 while self.valid_space(self.current_piece, grid):
@@ -334,23 +329,21 @@ class Tetris:
                 return True
         return False
 
-    def update_screen(self,grid):
-        self.screen.fill((0, 0, 0),(self.top_right_x-50,0,550,700))
-        self.draw_window(self.screen, self.label_human, self.top_right_x, grid, self.counter_ai)
+    def update_screen(self, grid):
+        self.screen.fill((0, 0, 0), (self.top_right_x - 50, 0, 550, 700))
+        self.draw_window(self.screen, self.label, self.top_right_x, grid, self.counter_ai)
         self.draw_next_shape(self.next_piece, self.screen, self.top_right_x)
-        pygame.display.update(self.top_right_x,0,300,700)
+        pygame.display.update(self.top_right_x, 0, 300, 700)
 
-    def piece_falling(self,grid):
+    def piece_falling(self, grid):
         self.current_piece.y += 1
         if not (self.valid_space(self.current_piece, grid)) and self.current_piece.y > 0:
             self.current_piece.y -= 1
             return True
         return False
 
-    def piece_landed(self,grid):
-
+    def piece_landed(self, grid):
         shape_pos = self.convert_shape_format(self.current_piece)
-        # IF PIECE HIT GROUND
         counter_human = 0
         for pos in shape_pos:
             p = (pos[0], pos[1])
@@ -361,9 +354,8 @@ class Tetris:
         if not self.bag:
             self.bag = self.get_shapes()
 
-        # call four times to check for multiple clear rows
         counter_human += self.clear_rows(grid, self.locked_positions)
-        # Adds a row and moves rows up
+        # Adds a row and moves rows down
         if self.counter_ai > counter_human:
             self.counter_ai = self.counter_ai - counter_human
         elif self.counter_ai == counter_human:
@@ -385,17 +377,17 @@ class Tetris:
                 self.locked_positions[r, 19] = (169, 169, 169)
         return counter_human
 
-    def main(self,movement=0,lines=0):
+    def main(self, movement=0, lines=0):
         landed = False
         self.counter_ai += lines
-        grid = self.create_grid(self.locked_positions)
+        grid = self.create_grid()
         lines_sent = 0
         if movement == 0:
             landed = self.piece_falling(grid)
         elif movement > 0:
-            landed = self.controls(movement,grid)
+            landed = self.controls(movement, grid)
+
         shape_pos = self.convert_shape_format(self.current_piece)
-        # add piece to the grid for drawing
         for i in range(len(shape_pos)):
             x, y = shape_pos[i]
             if y > -1:
