@@ -138,6 +138,8 @@ class Tetris:
         self.score = 0
         self.total_pieces_placed = 0
         self.total_lines_cleared = 0
+        self.combo = 0
+        self.max_combo = 0
 
         self.locked_positions = {}
         font = pygame.font.SysFont('comicsans', 60)
@@ -488,6 +490,7 @@ class Tetris:
         self.height = 20
         self.total_lines_cleared = 0
         self.end_score = 0
+        self.combo = 0
         grid_ai = self.create_grid()
         return self.get_state_properties(grid_ai)
 
@@ -501,8 +504,8 @@ class Tetris:
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y - 20))
         label = font.render(f'Score = {self.score}', 1, (255, 255, 255))
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 10))
-        # label = font.render(f'Iterations left = {self.iterations}', 1, (255, 255, 255))
-        # self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 30))
+        label = font.render(f'Max Combo = {self.max_combo}', 1, (255, 255, 255))
+        self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 30))
         label = font.render(f'Last Score = {self.last_score}', 1, (255, 255, 255))
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 50))
         label = font.render(f'Top Score = {self.top_score}', 1, (255, 255, 255))
@@ -628,12 +631,18 @@ class Tetris:
                             self.locked_positions[r, 19 - x] = (169, 169, 169)
                     self.counter_human = 0
 
-        score = 1 * line_placed + (lines_cleared ** 2) * 10
-        if self.run:
-            self.last_score = self.total_lines_cleared * 100 + self.total_pieces_placed
-            if self.top_score < self.total_lines_cleared * 100 + self.total_pieces_placed:
-                self.top_score = self.total_lines_cleared * 100 + self.total_pieces_placed
+        if lines_cleared > 0:
+            self.combo = (self.combo + 1)
+        else:
+            self.combo = 0
+        if self.combo > self.max_combo:
+            self.max_combo = self.combo
+        score = 1 * line_placed + (lines_cleared ** 2) * 10 + self.combo * 5
         self.score += score
+        if self.run:
+            self.last_score = self.score
+            if self.top_score < self.score:
+                self.top_score = self.score
         if self.draw:
             self.draw_stats()
         else:

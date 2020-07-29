@@ -465,7 +465,6 @@ class Tetris:
         self.end_score = 0
         grid_ai = self.create_grid()
         self.combo = 0
-        self.max_combo = 0
         return self.get_state_properties(grid_ai)
 
     def draw_stats(self):
@@ -477,7 +476,7 @@ class Tetris:
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y - 20))
         label = font.render(f'Score = {self.score}', 1, (255, 255, 255))
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 10))
-        label = font.render(f'Combo = {self.combo}', 1, (255, 255, 255))
+        label = font.render(f'Max Combo = {self.max_combo}', 1, (255, 255, 255))
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 30))
         label = font.render(f'Last Score = {self.last_score}', 1, (255, 255, 255))
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 50))
@@ -569,7 +568,10 @@ class Tetris:
         score = 1 * line_placed + (lines_cleared ** 2) * 10 + self.combo * 5
         self.score += score
         area = pygame.Rect(self.top_left_x - 50, self.top_left_y, 650, 700)
-
+        if self.run:
+            self.last_score = self.score
+            if self.top_score < self.score:
+                self.top_score = self.score
         if self.draw:
             self.draw_stats()
         else:
