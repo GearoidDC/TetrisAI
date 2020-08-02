@@ -33,7 +33,8 @@ buttons = [play_vs_cheater_ai_button, play_vs_fair_ai_button, return_button,solo
 
 def main():
     pygame.display.set_caption("Tetris")
-    screen = pygame.display.set_mode((screen_width, screen_height))
+    screen = pygame.display.set_mode((screen_width, screen_height),pygame.DOUBLEBUF)
+    screen.set_alpha(None)
     go = True
     while go:
         for event in pygame.event.get():

@@ -11,15 +11,16 @@ settings = Setting()
 screen_width = settings.screen_width
 screen_height = settings.screen_height
 dark_grey = settings.screen_colour
-screen_centre = screen_width/2
+screen_centre = screen_width / 2
 button_colour_off = settings.button_colour_off
 button_colour_on = settings.button_colour_on
 button_width = settings.button_width
 button_height = settings.button_height
-button_centred = screen_centre - button_width/2
+button_centred = screen_centre - button_width / 2
 
 
-def start(screen, saved_path="fair_tetris",mode="vs"):
+def start(screen, saved_path="fair_tetris", mode="vs"):
+    font_small = pygame.font.SysFont('comicsans', 30)
     return_button = Button.Button(button_colour_off, 625, 625, 150, 50, 'Return')
     pygame.display.set_caption(saved_path)
     if torch.cuda.is_available():
@@ -37,109 +38,123 @@ def start(screen, saved_path="fair_tetris",mode="vs"):
     else:
         draw = True
     if saved_path == "fair_tetris":
-        env = Fair(screen,"play",draw)
+        env = Fair(screen, "play", draw)
     else:
-        env = Cheater(screen,"play",draw)
+        env = Cheater(screen, "play", draw)
     env.reset()
 
     if torch.cuda.is_available():
         model.cuda()
 
-    fall_time = 0
-    fall_speed = 0.27
     clock = pygame.time.Clock()
     screen.fill((0, 0, 0))
     pygame.display.update()
-    human_lines = 0
     holder = 0
+    if mode == "vs":
+        vs_mode(return_button, env, model, holder, screen, human_tetris, clock)
+    else:
+        solo_mode(return_button, env, model, holder, screen, font_small, clock)
+
+    return True
+
+
+def vs_mode(return_button, env, model, holder, screen, human_tetris, clock):
+    fall_time = 0
+    fall_speed = 0.27
     lost = False
     won = False
     run = True
-    if mode == "vs":
-        while run:
+    human_lines = 0
+    while run:
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.display.quit()
-                    quit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_LEFT:
-                        lost, human_lines = human_tetris.main(1)
-                    elif event.key == pygame.K_RIGHT:
-                        lost, human_lines = human_tetris.main(2)
-                    elif event.key == pygame.K_UP:
-                        lost, human_lines = human_tetris.main(3)
-                    elif event.key == pygame.K_DOWN:
-                        lost, human_lines = human_tetris.main(4)
-                    elif event.key == pygame.K_SPACE:
-                        lost, human_lines = human_tetris.main(5)
-                pos = pygame.mouse.get_pos()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if return_button.isover(pos):
-                        return True
-                if event.type == pygame.MOUSEMOTION:
-                    if return_button.isover(pos):
-                        return_button.color = (61, 97, 128)
-                    else:
-                        return_button.color = (147, 150, 153)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.display.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    lost, human_lines = human_tetris.main(1)
+                elif event.key == pygame.K_RIGHT:
+                    lost, human_lines = human_tetris.main(2)
+                elif event.key == pygame.K_UP:
+                    lost, human_lines = human_tetris.main(3)
+                elif event.key == pygame.K_DOWN:
+                    lost, human_lines = human_tetris.main(4)
+                elif event.key == pygame.K_SPACE:
+                    lost, human_lines = human_tetris.main(5)
+                elif event.key == pygame.K_LSHIFT:
+                    lost, human_lines = human_tetris.main(6)
+            pos = pygame.mouse.get_pos()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if return_button.isover(pos):
+                    return True
+            if event.type == pygame.MOUSEMOTION:
+                if return_button.isover(pos):
+                    return_button.color = (61, 97, 128)
+                else:
+                    return_button.color = (147, 150, 153)
+        if human_lines > 0:
+            holder += human_lines
+            human_lines = 0
+        if fall_time / 1000 >= fall_speed:
+            fall_time = 0
+            lost, human_lines = human_tetris.main(0)
             if human_lines > 0:
                 holder += human_lines
                 human_lines = 0
-            if fall_time / 1000 >= fall_speed:
-                fall_time = 0
-                lost, human_lines = human_tetris.main(0)
+            reward, won = ai(env, model, holder)
+            holder = 0
+            if reward > 0:
+                lost, human_lines = human_tetris.main(-1, reward)
                 if human_lines > 0:
                     holder += human_lines
                     human_lines = 0
-                reward, won = ai(env,model,holder)
-                holder = 0
-                if reward > 0:
-                    lost, human_lines = human_tetris.main(-1, reward)
-                    if human_lines > 0:
-                        holder += human_lines
-                        human_lines = 0
-            fall_time += clock.get_rawtime()
-            clock.tick()
-            return_button.draw(screen)
-            pygame.display.update()
+        fall_time += clock.get_rawtime()
+        clock.tick()
+        return_button.draw(screen)
+        pygame.display.update()
 
-            if won or lost:
-                return_button.color = (0, 0, 0)
-                return_button.draw(screen)
-                run = display(won, lost, screen)
-                screen.fill((0, 0, 0))
-                env.reset()
-                human_tetris.reset()
-                lost = False
-                won = False
-    else:
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.display.quit()
-                    quit()
-                pos = pygame.mouse.get_pos()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if return_button.isover(pos):
-                        return True
-                if event.type == pygame.MOUSEMOTION:
-                    if return_button.isover(pos):
-                        return_button.color = (61, 97, 128)
-                    else:
-                        return_button.color = (147, 150, 153)
-            reward, won = ai(env, model, holder)
+        if won or lost:
+            return_button.color = (0, 0, 0)
             return_button.draw(screen)
-            pygame.display.flip()
-            if won:
-                env.reset()
+            run = display(won, lost, screen)
+            screen.fill((0, 0, 0))
+            env.reset()
+            human_tetris.reset()
+            lost = False
+            won = False
 
-    return True
+
+def solo_mode(return_button, env, model, holder, screen, font_small, clock):
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.display.quit()
+                quit()
+            pos = pygame.mouse.get_pos()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if return_button.isover(pos):
+                    return True
+            if event.type == pygame.MOUSEMOTION:
+                if return_button.isover(pos):
+                    return_button.color = (61, 97, 128)
+                else:
+                    return_button.color = (147, 150, 153)
+        reward, won = ai(env, model, holder)
+        return_button.draw(screen)
+        fps = font_small.render(str(int(clock.get_fps())), True, pygame.Color('white'))
+        screen.blit(fps, (50, 50))
+        clock.tick(200)
+        pygame.display.flip()
+        if won:
+            env.reset()
 
 
 def user_controls():
     red = ""
 
-def ai(env,model,holder):
+
+def ai(env, model, holder):
     next_steps = env.get_next_states()
     next_actions, next_states = zip(*next_steps.items())
     next_states = torch.stack(next_states)

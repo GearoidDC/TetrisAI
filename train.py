@@ -4,24 +4,24 @@ import shutil
 from random import random, randint, sample
 import pygame
 import Button
-
+import matplotlib
+import matplotlib.backends.backend_agg as agg
+import pylab
 import numpy as np
 import torch
 import torch.nn as nn
 from tensorboardX import SummaryWriter
-
 from DeepQLearning import DeepQNetwork
 from TetrisCheater import Tetris as Cheater
 from TetrisFair import Tetris as Fair
 from collections import deque
 
+matplotlib.use("Agg")
+
 
 def get_args(training_type):
     parser = argparse.ArgumentParser(
         """Implementation of Deep Q Network to play Tetris""")
-    parser.add_argument("--width", type=int, default=10, help="The common width for all images")
-    parser.add_argument("--height", type=int, default=20, help="The common height for all images")
-    parser.add_argument("--block_size", type=int, default=30, help="Size of a block")
     parser.add_argument("--batch_size", type=int, default=512, help="The number of images per batch")
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--gamma", type=float, default=0.99)
@@ -38,9 +38,9 @@ def get_args(training_type):
                             help="Number of epoches between testing phases")
 
     elif training_type == "fair":
-        parser.add_argument("--num_decay_epochs", type=float, default=3000)
-        parser.add_argument("--num_epochs", type=int, default=5000)
-        parser.add_argument("--replay_memory_size", type=int, default=100000,
+        parser.add_argument("--num_decay_epochs", type=float, default=2000)
+        parser.add_argument("--num_epochs", type=int, default=3000)
+        parser.add_argument("--replay_memory_size", type=int, default=300000,
                             help="Number of epoches between testing phases")
 
     args = parser.parse_args()
@@ -48,6 +48,16 @@ def get_args(training_type):
 
 
 def train(opt, training_type, number_of_features):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print('Using device:', device)
+    print()
+    if device.type == 'cuda':
+        print(torch.cuda.get_device_name(0))
+        print('Memory Usage:')
+        print('Allocated:', round(torch.cuda.memory_allocated(0) / 1024 ** 3, 1), 'GB')
+        print('Cached:   ', round(torch.cuda.memory_cached(0) / 1024 ** 3, 1), 'GB')
+    font_small = pygame.font.SysFont('comicsans', 30)
+    clock = pygame.time.Clock()
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
     else:
@@ -56,11 +66,11 @@ def train(opt, training_type, number_of_features):
         shutil.rmtree(opt.log_path)
     os.makedirs(opt.log_path)
     writer = SummaryWriter(opt.log_path)
-    screen = pygame.display.set_mode((1400, 700))
+    screen = pygame.display.set_mode((1400, 700), pygame.DOUBLEBUF)
     if training_type == "fair":
-        env = Fair(screen,"train",True)
+        env = Fair(screen, "train", True)
     else:
-        env = Cheater(screen,"train",True)
+        env = Cheater(screen, "train", True)
     model = DeepQNetwork(number_of_features)
     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
     criterion = nn.MSELoss()
@@ -74,7 +84,10 @@ def train(opt, training_type, number_of_features):
     epoch = 0
     max_steps = 2500
     steps = 0
+    score = []
     return_button = Button.Button((61, 97, 128), 575, 625, 200, 50, 'Return')
+    screen.fill((0, 0, 0))
+    pygame.display.flip()
     while epoch < opt.num_epochs:
         next_steps = env.get_next_states()
         # Exploration or exploitation
@@ -117,8 +130,15 @@ def train(opt, training_type, number_of_features):
                     return_button.color = (61, 97, 128)
                 else:
                     return_button.color = (147, 150, 153)
+
+        area = pygame.Rect(0, 0, 800, 700)
+        # screen.fill((0, 0, 0), area)
         return_button.draw(screen)
-        pygame.display.update()
+        fps = font_small.render(str(int(clock.get_fps())), True, pygame.Color('white'))
+        screen.blit(fps, (50, 50))
+        clock.tick(200)
+
+        pygame.display.update(area)
         if steps >= max_steps:
             done = True
         if done:
@@ -135,6 +155,7 @@ def train(opt, training_type, number_of_features):
             continue
         if len(replay_memory) < opt.replay_memory_size / 10:
             continue
+        score.append(final_score)
         epoch += 1
         batch = sample(replay_memory, min(len(replay_memory), opt.batch_size))
         state_batch, reward_batch, next_state_batch, done_batch = zip(*batch)
@@ -161,6 +182,7 @@ def train(opt, training_type, number_of_features):
         loss = criterion(q_values, y_batch)
         loss.backward()
         optimizer.step()
+        graph_results(score)
 
         print("Epoch: {}/{}, Action: {}, Score: {}, Tetrominoes {}, Cleared lines: {}, Max Combo: {}".format(
             epoch,
@@ -179,6 +201,65 @@ def train(opt, training_type, number_of_features):
 
     torch.save(model, "{}/tetris".format(opt.saved_path))
     writer.close()
+    display(screen)
+
+
+def graph_results(score):
+    fig = pylab.figure(figsize=[4, 4],  # Inches
+                       dpi=90,  # 100 dots per inch, so the resulting buffer is 400x400 pixels
+                       )
+    ax = fig.gca()
+    ax.plot(score)
+    ax.set_title("Agents score vs Iteration")
+    ax.set_xlabel('Iteration')
+    ax.set_ylabel('Score')
+
+    canvas = agg.FigureCanvasAgg(fig)
+    canvas.draw()
+    renderer = canvas.get_renderer()
+    raw_data = renderer.tostring_rgb()
+
+    pygame.init()
+
+    screen = pygame.display.get_surface()
+
+    size = canvas.get_width_height()
+
+    surf = pygame.image.fromstring(raw_data, size, "RGB")
+    screen.blit(surf, (800, 200))
+    area = pygame.Rect(800, 0, 600, 700)
+    pygame.display.update(area)
+    pylab.close('all')
+
+
+def display(screen):
+    pygame.draw.rect(screen, (71, 73, 74), (1400 / 2 - 200, 200, 400, 300), 0)
+    selection_menu_button = Button.Button((61, 97, 128), 525, 400, 350, 50, 'Selection Menu')
+    draw_text_middle("Training Complete", 40, (255, 255, 255), screen)
+    pygame.display.update()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.display.quit()
+                quit()
+            pos = pygame.mouse.get_pos()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if selection_menu_button.isover(pos):
+                    return False
+            if event.type == pygame.MOUSEMOTION:
+                if selection_menu_button.isover(pos):
+                    selection_menu_button.color = (61, 97, 128)
+                else:
+                    selection_menu_button.color = (147, 150, 153)
+        selection_menu_button.draw(screen)
+        pygame.display.update()
+
+
+def draw_text_middle(text, size, color, screen):
+    font = pygame.font.SysFont('comicsans', size, bold=True)
+    label = font.render(text, 1, color)
+
+    screen.blit(label, (1400 / 2 - (label.get_width() / 2), 250 - label.get_height() / 2))
 
 
 def main(training_type, number_of_features):
