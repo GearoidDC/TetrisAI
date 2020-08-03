@@ -35,6 +35,7 @@ class Tetris:
         self.last_score = 0
         self.top_score = 0
         self.held_piece = []
+        self.initial_grid = [[(0, 0, 0) for x in range(10)] for x in range(20)]
 
         self.combo = 0
         self.max_combo = 0
@@ -56,41 +57,6 @@ class Tetris:
             self.current_piece = holder
         self.current_piece.y = self.held_piece.y
         self.current_piece.x = self.held_piece.x
-
-    def draw_grid(self, surface, row, col, sx):
-        sy = self.top_left_y
-        for i in range(row):
-            pygame.draw.line(surface, (128, 128, 128), (sx, sy + i * 30),
-                             (sx + self.play_width, sy + i * 30))  # horizontal lines
-            for j in range(col):
-                pygame.draw.line(surface, (128, 128, 128), (sx + j * 30, sy),
-                                 (sx + j * 30, sy + self.play_height))  # vertical lines
-
-    def clear_rows(self, grid, locked):
-        lines_cleared = 0
-        i = 0
-        while i < len(grid):
-            row = grid[i]
-            if (0, 0, 0) not in row:
-                inc = 1
-                lines_cleared += 1
-                # add positions to remove from locked
-                ind = i
-                for j in range(len(row)):
-                    try:
-                        del locked[(j, i)]
-                    except:
-                        continue
-                if inc > 0:
-                    for key in sorted(list(locked), key=lambda z: z[1])[::-1]:
-                        x, y = key
-                        if y < ind:
-                            newKey = (x, y + 1)
-                            locked[newKey] = locked.pop(key)
-                    grid = create_grid(self.locked_positions)
-            else:
-                i = i + 1
-        return lines_cleared
 
     def draw_next_shape(self, shape, surface, position):
 
@@ -115,9 +81,9 @@ class Tetris:
         sy = self.top_left_y
         if shape:
             shape.rotation = 0
-            format = shape.shape[shape.rotation % len(shape.shape)]
+            shape_layout = shape.shape[shape.rotation % len(shape.shape)]
 
-            for i, line in enumerate(format):
+            for i, line in enumerate(shape_layout):
                 row = list(line)
                 for j, column in enumerate(row):
                     if column == '0':
@@ -136,17 +102,16 @@ class Tetris:
                 pygame.draw.rect(surface, grid[i][j], (position + j * 30, self.top_left_y + i * 30, 30, 30), 0)
 
         # draw grid and border
-        self.draw_grid(surface, 20, 10, position)
+        draw_grid(surface, 20, 10, position,self.top_left_y,self.play_width,self.play_height)
         for line in range(lines_sent):
             pygame.draw.rect(surface, (0, 128, 128), (position - 40, 685 - line * 15, 20, 15), 0)
         draw_lines_sent(surface, 20, position, self.top_left_y)
         pygame.draw.rect(surface, (255, 0, 0), (position, self.top_left_y, self.play_width, self.play_height), 5)
 
-    def get_state_properties(self,grid):
+    def get_state_properties(self, grid):
         lines_cleared, board = cleared(grid)
         number_of_holes = holes(board)
         bumpiness, height = bumpiness_and_height(board)
-
         return torch.FloatTensor([lines_cleared, number_of_holes, bumpiness, height])
 
     def get_next_states(self):
@@ -260,9 +225,8 @@ class Tetris:
         self.total_pieces_placed = 0
         self.run = False
         self.total_lines_cleared = 0
-        grid = create_grid(self.locked_positions)
         self.combo = 0
-        return self.get_state_properties(grid)
+        return self.get_state_properties(self.initial_grid)
 
     def draw_stats(self):
         area = pygame.Rect(0, 0, 900, 700)
@@ -294,8 +258,6 @@ class Tetris:
 
         self.current_piece.x += ai_move
         accepted_positions = get_accepted_positions(grid)
-        #if not valid_space(self.current_piece, accepted_positions):
-        #    self.current_piece.x += 1
         while valid_space(self.current_piece, accepted_positions):
             self.current_piece.y += 1
         self.current_piece.y -= 1
@@ -327,7 +289,7 @@ class Tetris:
 
             if not self.run:
                 # call four times to check for multiple clear rows
-                self.counter_ai += self.clear_rows(grid, self.locked_positions)
+                self.counter_ai += clear_rows(grid, self.locked_positions)
                 self.score += self.counter_ai
                 self.total_lines_cleared += self.counter_ai
                 lines_cleared = self.counter_ai
@@ -346,12 +308,12 @@ class Tetris:
                             if (j, i) in self.locked_positions:
                                 self.locked_positions[j, i - self.counter_human] = self.locked_positions[j, i]
                                 del self.locked_positions[j, i]
-                    lines_sent = random.sample(range(10), 9)
+                    rows_to = random.sample(range(10), 9)
                     for x in range(self.counter_human):
                         for g in range(10):
                             self.locked_positions[g, 19 - x] = (0, 0, 0)
                     for x in range(self.counter_human):
-                        for r in lines_sent:
+                        for r in rows_to:
                             self.locked_positions[r, 19 - x] = (169, 169, 169)
                     self.counter_human = 0
         if lines_cleared > 0:
@@ -363,7 +325,7 @@ class Tetris:
         score = 1 * line_placed + pow(lines_cleared, 2) * 10 + self.combo * 5
         self.score += score
         area = pygame.Rect(0, self.top_left_y, 650, 700)
-        if self.run:
+        if self.run or (lines_sent == 1 and self.mode == "train"):
             self.last_score = self.score
             if self.top_score < self.score:
                 self.top_score = self.score

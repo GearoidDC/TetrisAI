@@ -39,15 +39,15 @@ def main():
                 sys.exit()
             pos = pygame.mouse.get_pos()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if play_vs_cheater_ai_button.isover(pos):
+                if play_vs_cheater_ai_button.is_over(pos):
                     go = train.main("cheater", 4)
-                elif play_vs_fair_ai_button.isover(pos):
-                    go = train.main("fair", 4)
-                elif return_button.isover(pos):
+                elif play_vs_fair_ai_button.is_over(pos):
+                    go = train.main("fair", 6)
+                elif return_button.is_over(pos):
                     go = False
             if event.type == pygame.MOUSEMOTION:
                 for x in range(len(buttons)):
-                    if buttons[x].isover(pos):
+                    if buttons[x].is_over(pos):
                         buttons[x].color = button_colour_on
                     else:
                         buttons[x].color = button_colour_off

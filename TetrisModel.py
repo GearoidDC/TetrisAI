@@ -1,6 +1,7 @@
 import random
 import pygame
 
+
 class Piece(object):
     def __init__(self, column, row, index):
         # SHAPE FORMATS
@@ -127,6 +128,15 @@ def create_grid(locked_positions):
     return grid
 
 
+def draw_grid(surface, row, col, sx, sy, play_width, play_height):
+    for i in range(row):
+        pygame.draw.line(surface, (128, 128, 128), (sx, sy + i * 30),
+                         (sx + play_width, sy + i * 30))  # horizontal lines
+        for j in range(col):
+            pygame.draw.line(surface, (128, 128, 128), (sx + j * 30, sy),
+                             (sx + j * 30, sy + play_height))  # vertical lines
+
+
 def get_shapes():
     bar = random.sample(range(0, 7), 7)
     bag = []
@@ -153,7 +163,6 @@ def convert_shape_format(current_piece):
 
 
 def valid_space(current_piece, accepted_positions):
-
     formatted = convert_shape_format(current_piece)
 
     for pos in formatted:
@@ -168,7 +177,7 @@ def valid_space(current_piece, accepted_positions):
     return True
 
 
-def draw_lines_sent(surface, col, sx,sy):
+def draw_lines_sent(surface, col, sx, sy):
     play_height = 600
     for i in range(col):
         pygame.draw.line(surface, (128, 128, 128), (sx - 40, sy + i * 15 + play_height / 2),
@@ -192,3 +201,30 @@ def check_lost(locked_positions):
         if y < 0:
             return True
     return False
+
+
+def clear_rows(grid, locked):
+    lines_cleared = 0
+    i = 0
+    while i < len(grid):
+        row = grid[i]
+        if (0, 0, 0) not in row:
+            inc = 1
+            lines_cleared += 1
+            # add positions to remove from locked
+            ind = i
+            for j in range(len(row)):
+                try:
+                    del locked[(j, i)]
+                except:
+                    continue
+            if inc > 0:
+                for key in sorted(list(locked), key=lambda z: z[1])[::-1]:
+                    x, y = key
+                    if y < ind:
+                        new_key = (x, y + 1)
+                        locked[new_key] = locked.pop(key)
+                grid = create_grid(locked)
+        else:
+            i = i + 1
+    return lines_cleared

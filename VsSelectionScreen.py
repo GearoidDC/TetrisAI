@@ -42,19 +42,19 @@ def main():
                 sys.exit()
             pos = pygame.mouse.get_pos()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if play_vs_cheater_ai_button.isover(pos):
+                if play_vs_cheater_ai_button.is_over(pos):
                     go = TetrisVsMode.start(screen, "cheater_tetris")
-                elif play_vs_fair_ai_button.isover(pos):
+                elif play_vs_fair_ai_button.is_over(pos):
                     go = TetrisVsMode.start(screen, "fair_tetris")
-                elif solo_cheater_ai_button.isover(pos):
+                elif solo_cheater_ai_button.is_over(pos):
                     go = TetrisVsMode.start(screen, "cheater_tetris","solo")
-                elif solo_fair_ai_button.isover(pos):
+                elif solo_fair_ai_button.is_over(pos):
                     go = TetrisVsMode.start(screen, "fair_tetris", "solo")
-                elif return_button.isover(pos):
+                elif return_button.is_over(pos):
                     go = False
             if event.type == pygame.MOUSEMOTION:
                 for x in range(len(buttons)):
-                    if buttons[x].isover(pos):
+                    if buttons[x].is_over(pos):
                         buttons[x].color = button_colour_on
                     else:
                         buttons[x].color = button_colour_off

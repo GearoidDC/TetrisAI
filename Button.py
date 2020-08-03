@@ -2,14 +2,12 @@ import pygame
 
 
 class Button:
-    def __init__(self, color, x, y, button_width, button_height, text='', call=None):
+    def __init__(self, color, x, y, button_width, button_height, text=''):
         self.color = color
         self.x = x
         self.y = y
         self.width = button_width
         self.height = button_height
-
-        self.call = call
         self.font = pygame.font.SysFont('comicsans', 60)
         self.text = text
 
@@ -25,7 +23,7 @@ class Button:
             win.blit(text, (
                 self.x + (self.width / 2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
 
-    def isover(self, pos):
+    def is_over(self, pos):
         # Pos is the mouse position or a tuple of (x,y) coordinates
         if self.x < pos[0] < self.x + self.width:
             if self.y < pos[1] < self.y + self.height:

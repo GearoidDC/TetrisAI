@@ -86,10 +86,10 @@ def vs_mode(return_button, env, model, holder, screen, human_tetris, clock):
                     lost, human_lines = human_tetris.main(6)
             pos = pygame.mouse.get_pos()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if return_button.isover(pos):
+                if return_button.is_over(pos):
                     return True
             if event.type == pygame.MOUSEMOTION:
-                if return_button.isover(pos):
+                if return_button.is_over(pos):
                     return_button.color = (61, 97, 128)
                 else:
                     return_button.color = (147, 150, 153)
@@ -133,10 +133,10 @@ def solo_mode(return_button, env, model, holder, screen, font_small, clock):
                 quit()
             pos = pygame.mouse.get_pos()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if return_button.isover(pos):
+                if return_button.is_over(pos):
                     return True
             if event.type == pygame.MOUSEMOTION:
-                if return_button.isover(pos):
+                if return_button.is_over(pos):
                     return_button.color = (61, 97, 128)
                 else:
                     return_button.color = (147, 150, 153)
@@ -185,16 +185,16 @@ def display(win, lose, screen):
                     quit()
                 pos = pygame.mouse.get_pos()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if play_again_button.isover(pos):
+                    if play_again_button.is_over(pos):
                         return True
-                    elif selection_menu_button.isover(pos):
+                    elif selection_menu_button.is_over(pos):
                         return False
                 if event.type == pygame.MOUSEMOTION:
-                    if play_again_button.isover(pos):
+                    if play_again_button.is_over(pos):
                         play_again_button.color = (61, 97, 128)
                     else:
                         play_again_button.color = (147, 150, 153)
-                    if selection_menu_button.isover(pos):
+                    if selection_menu_button.is_over(pos):
                         selection_menu_button.color = (61, 97, 128)
                     else:
                         selection_menu_button.color = (147, 150, 153)
@@ -211,16 +211,16 @@ def display(win, lose, screen):
                     quit()
                 pos = pygame.mouse.get_pos()
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if play_again_button.isover(pos):
+                    if play_again_button.is_over(pos):
                         return True
-                    elif selection_menu_button.isover(pos):
+                    elif selection_menu_button.is_over(pos):
                         return False
                 if event.type == pygame.MOUSEMOTION:
-                    if play_again_button.isover(pos):
+                    if play_again_button.is_over(pos):
                         play_again_button.color = (61, 97, 128)
                     else:
                         play_again_button.color = (147, 150, 153)
-                    if selection_menu_button.isover(pos):
+                    if selection_menu_button.is_over(pos):
                         selection_menu_button.color = (61, 97, 128)
                     else:
                         selection_menu_button.color = (147, 150, 153)

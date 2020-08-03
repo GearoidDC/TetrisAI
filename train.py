@@ -34,7 +34,7 @@ def get_args(training_type):
     if training_type == "cheater":
         parser.add_argument("--num_decay_epochs", type=float, default=2000)
         parser.add_argument("--num_epochs", type=int, default=3000)
-        parser.add_argument("--replay_memory_size", type=int, default=30000,
+        parser.add_argument("--replay_memory_size", type=int, default=50000,
                             help="Number of epoches between testing phases")
 
     elif training_type == "fair":
@@ -49,13 +49,7 @@ def get_args(training_type):
 
 def train(opt, training_type, number_of_features):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print('Using device:', device)
-    print()
-    if device.type == 'cuda':
-        print(torch.cuda.get_device_name(0))
-        print('Memory Usage:')
-        print('Allocated:', round(torch.cuda.memory_allocated(0) / 1024 ** 3, 1), 'GB')
-        print('Cached:   ', round(torch.cuda.memory_cached(0) / 1024 ** 3, 1), 'GB')
+
     font_small = pygame.font.SysFont('comicsans', 30)
     clock = pygame.time.Clock()
     if torch.cuda.is_available():
@@ -71,14 +65,13 @@ def train(opt, training_type, number_of_features):
         env = Fair(screen, "train", True)
     else:
         env = Cheater(screen, "train", True)
-    model = DeepQNetwork(number_of_features)
+    model = DeepQNetwork(number_of_features).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
     criterion = nn.MSELoss()
 
-    state = env.reset()
-    if torch.cuda.is_available():
-        model.cuda()
-        state = state.cuda()
+    state = env.reset().to(device)
+    #model.to(device)
+    #state = state.to(device)
 
     replay_memory = deque(maxlen=opt.replay_memory_size)
     epoch = 0
@@ -96,9 +89,9 @@ def train(opt, training_type, number_of_features):
         u = random()
         random_action = u <= epsilon
         next_actions, next_states = zip(*next_steps.items())
-        next_states = torch.stack(next_states)
-        if torch.cuda.is_available():
-            next_states = next_states.cuda()
+        next_states = torch.stack(next_states).to(device)
+        #if torch.cuda.is_available():
+        #    next_states = next_states.to(device)
         model.eval()
         with torch.no_grad():
             predictions = model(next_states)[:, 0]
@@ -108,13 +101,16 @@ def train(opt, training_type, number_of_features):
         else:
             index = torch.argmax(predictions).item()
 
-        next_state = next_states[index, :]
+        next_state = next_states[index, :].to(device)
         action = next_actions[index]
         steps = steps + 1
-        reward, done = env.step(action)
+        if steps >= max_steps:
+            reward, done = env.step(action, lines_sent=1)
+        else:
+            reward, done = env.step(action)
 
-        if torch.cuda.is_available():
-            next_state = next_state.cuda()
+        #if torch.cuda.is_available():
+        #    next_state = next_state.to(device)
         replay_memory.append([state, reward, next_state, done])
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -122,11 +118,11 @@ def train(opt, training_type, number_of_features):
                 quit()
             pos = pygame.mouse.get_pos()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if return_button.isover(pos):
+                if return_button.is_over(pos):
                     writer.close()
                     return True
             if event.type == pygame.MOUSEMOTION:
-                if return_button.isover(pos):
+                if return_button.is_over(pos):
                     return_button.color = (61, 97, 128)
                 else:
                     return_button.color = (147, 150, 153)
@@ -137,7 +133,6 @@ def train(opt, training_type, number_of_features):
         fps = font_small.render(str(int(clock.get_fps())), True, pygame.Color('white'))
         screen.blit(fps, (50, 50))
         clock.tick(200)
-
         pygame.display.update(area)
         if steps >= max_steps:
             done = True
@@ -147,9 +142,9 @@ def train(opt, training_type, number_of_features):
             final_tetrominoes = env.total_pieces_placed
             final_cleared_lines = env.total_lines_cleared
             max_combo = env.max_combo
-            state = env.reset()
-            if torch.cuda.is_available():
-                state = state.cuda()
+            state = env.reset().to(device)
+            #if torch.cuda.is_available():
+            #    state = state.to(device)
         else:
             state = next_state
             continue
@@ -159,14 +154,14 @@ def train(opt, training_type, number_of_features):
         epoch += 1
         batch = sample(replay_memory, min(len(replay_memory), opt.batch_size))
         state_batch, reward_batch, next_state_batch, done_batch = zip(*batch)
-        state_batch = torch.stack(tuple(state for state in state_batch))
-        reward_batch = torch.from_numpy(np.array(reward_batch, dtype=np.float32)[:, None])
-        next_state_batch = torch.stack(tuple(state for state in next_state_batch))
+        state_batch = torch.stack(tuple(state for state in state_batch)).to(device)
+        reward_batch = torch.from_numpy(np.array(reward_batch, dtype=np.float32)[:, None]).to(device)
+        next_state_batch = torch.stack(tuple(state for state in next_state_batch)).to(device)
 
-        if torch.cuda.is_available():
-            state_batch = state_batch.cuda()
-            reward_batch = reward_batch.cuda()
-            next_state_batch = next_state_batch.cuda()
+        #if torch.cuda.is_available():
+        #    state_batch = state_batch.to(device)
+        #    reward_batch = reward_batch.to(device)
+        #    next_state_batch = next_state_batch.to(device)
 
         q_values = model(state_batch)
         model.eval()
@@ -199,7 +194,7 @@ def train(opt, training_type, number_of_features):
         if epoch > 0 and epoch % opt.save_interval == 0:
             torch.save(model, "{}/{}_tetris_{}".format(opt.saved_path, training_type, epoch))
 
-    torch.save(model, "{}/tetris".format(opt.saved_path))
+    torch.save(model, "{}/{}_tetris".format(opt.saved_path, training_type))
     writer.close()
     display(screen)
 
@@ -244,10 +239,10 @@ def display(screen):
                 quit()
             pos = pygame.mouse.get_pos()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if selection_menu_button.isover(pos):
+                if selection_menu_button.is_over(pos):
                     return False
             if event.type == pygame.MOUSEMOTION:
-                if selection_menu_button.isover(pos):
+                if selection_menu_button.is_over(pos):
                     selection_menu_button.color = (61, 97, 128)
                 else:
                     selection_menu_button.color = (147, 150, 153)

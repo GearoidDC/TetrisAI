@@ -43,42 +43,6 @@ class Tetris:
             self.current_piece.y = self.held_piece.y
             self.current_piece.x = self.held_piece.x
 
-    def draw_grid(self, surface, row, col, sx):
-        sy = self.top_left_y
-        for i in range(row):
-            pygame.draw.line(surface, (128, 128, 128), (sx, sy + i * 30),
-                             (sx + self.play_width, sy + i * 30))  # horizontal lines
-            for j in range(col):
-                pygame.draw.line(surface, (128, 128, 128), (sx + j * 30, sy),
-                                 (sx + j * 30, sy + self.play_height))  # vertical lines
-
-    def clear_rows(self, grid, locked):
-        # need to see if row is clear the shift every other row above down one
-        linessss = 0
-        i = 0
-        while i < len(grid):
-            row = grid[i]
-            if (0, 0, 0) not in row:
-                inc = 1
-                linessss += 1
-                # add positions to remove from locked
-                ind = i
-                for j in range(len(row)):
-                    try:
-                        del locked[(j, i)]
-                    except:
-                        continue
-                if inc > 0:
-                    for key in sorted(list(locked), key=lambda z: z[1])[::-1]:
-                        x, y = key
-                        if y < ind:
-                            new_key = (x, y + 1)
-                            locked[new_key] = locked.pop(key)
-                    grid = create_grid(self.locked_positions)
-            else:
-                i = i + 1
-        return linessss
-
     def draw_next_shape(self, shape, surface, position):
         font = pygame.font.SysFont('comicsans', 30)
         label = font.render('Next Piece', 1, (255, 255, 255))
@@ -136,7 +100,7 @@ class Tetris:
                 pygame.draw.rect(surface, grid[i][j], (position + j * 30, self.top_left_y + i * 30, 30, 30), 0)
 
         # draw grid and border
-        self.draw_grid(surface, 20, 10, position)
+        draw_grid(surface, 20, 10, position,self.top_left_y,self.play_width,self.play_height)
         for line in range(lines_sent):
             pygame.draw.rect(surface, (0, 128, 128), (position - 40, 685 - line * 15, 20, 15), 0)
         self.draw_lines_sent(surface, 20, position)
@@ -237,7 +201,7 @@ class Tetris:
         if not self.bag:
             self.bag = get_shapes()
 
-        counter_human += self.clear_rows(grid, self.locked_positions)
+        counter_human += clear_rows(grid, self.locked_positions)
         # Adds a row and moves rows down
         if self.counter_ai > counter_human:
             self.counter_ai = self.counter_ai - counter_human

@@ -101,33 +101,6 @@ class Tetris:
                 pygame.draw.line(surface, (128, 128, 128), (sx + j * 30, sy),
                                  (sx + j * 30, sy + self.play_height))  # vertical lines
 
-    def clear_rows(self, grid, locked):
-        # need to see if row is clear the shift every other row above down one
-        lines_cleared = 0
-        i = 0
-        while i < len(grid):
-            row = grid[i]
-            if (0, 0, 0) not in row:
-                inc = 1
-                lines_cleared += 1
-                # add positions to remove from locked
-                ind = i
-                for j in range(len(row)):
-                    try:
-                        del locked[(j, i)]
-                    except:
-                        continue
-                if inc > 0:
-                    for key in sorted(list(locked), key=lambda z: z[1])[::-1]:
-                        x, y = key
-                        if y < ind:
-                            new_key = (x, y + 1)
-                            locked[new_key] = locked.pop(key)
-                    grid = create_grid(self.locked_positions)
-            else:
-                i = i + 1
-        return lines_cleared
-
     def draw_next_shape(self, shape, surface, position):
         label = self.font_small.render('Next Shape', 1, (255, 255, 255))
 
@@ -183,7 +156,7 @@ class Tetris:
                 pygame.draw.rect(surface, grid[i][j], (position + j * 30, self.top_left_y + i * 30, 30, 30), 0)
 
         # draw grid and border
-        self.draw_grid(surface, 20, 10, position)
+        draw_grid(surface, 20, 10, position,self.top_left_y,self.play_width,self.play_height)
         for line in range(lines_sent):
             pygame.draw.rect(surface, (0, 128, 128), (position - 40, 685 - line * 15, 20, 15), 0)
         self.draw_lines_sent(surface, 20, position)
@@ -194,7 +167,7 @@ class Tetris:
         number_of_holes = holes(board)
         bumpiness, height = bumpiness_and_height(board)
 
-        return torch.FloatTensor([lines_cleared, number_of_holes, bumpiness, height])
+        return torch.FloatTensor([lines_cleared, number_of_holes, bumpiness, height,self.distance_down,abs(self.x_move)])
 
     def get_next_states(self):
         states = {}
@@ -457,7 +430,7 @@ class Tetris:
                 self.run = True
 
             if not self.run:
-                self.counter_ai += self.clear_rows(grid, self.locked_positions)
+                self.counter_ai += clear_rows(grid, self.locked_positions)
                 self.score += self.counter_ai
                 self.total_lines_cleared += self.counter_ai
                 lines_cleared = self.counter_ai
