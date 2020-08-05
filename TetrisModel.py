@@ -2,6 +2,7 @@ import random
 import pygame
 
 
+# Creates a Tetris Piece object
 class Piece(object):
     def __init__(self, column, row, index):
         # SHAPE FORMATS
@@ -115,11 +116,12 @@ class Piece(object):
         self.shape = shapes[index]
         self.color = shape_colors[shapes.index(self.shape)]
         self.rotation = 0
+        self.index = index
 
 
+# Creates the tetris board grid
 def create_grid(locked_positions):
     grid = [[(0, 0, 0) for x in range(10)] for x in range(20)]
-
     for i in range(len(grid)):
         for j in range(len(grid[i])):
             if (j, i) in locked_positions:
@@ -128,6 +130,7 @@ def create_grid(locked_positions):
     return grid
 
 
+# Draw the grid
 def draw_grid(surface, row, col, sx, sy, play_width, play_height):
     for i in range(row):
         pygame.draw.line(surface, (128, 128, 128), (sx, sy + i * 30),
@@ -137,15 +140,16 @@ def draw_grid(surface, row, col, sx, sy, play_width, play_height):
                              (sx + j * 30, sy + play_height))  # vertical lines
 
 
+# Returns a shuffled seven piece bag
 def get_shapes():
-    bar = random.sample(range(0, 7), 7)
+    mixed_numbers = random.sample(range(0, 7), 7)
     bag = []
-    for i in range(7):
-        bag.append(Piece(5, 0, bar[i]))
-
+    for i in mixed_numbers:
+        bag.append(Piece(5, 0, i))
     return bag
 
 
+# Converts the piece in a group of coordinates
 def convert_shape_format(current_piece):
     positions = []
     shape_layout = current_piece.shape[current_piece.rotation % len(current_piece.shape)]
@@ -166,13 +170,16 @@ def valid_space(current_piece, accepted_positions):
     formatted = convert_shape_format(current_piece)
 
     for pos in formatted:
-        if pos not in accepted_positions:
-            if pos[1] > -1:
-                return False
-            elif pos[0] > 9:
-                return False
-            elif pos[0] < 0:
-                return False
+        if pos[1] < -5:
+            return False
+        elif pos[0] > 9:
+            return False
+        elif pos[0] < 0:
+            return False
+        elif pos[1] > 19:
+            return False
+        elif pos in accepted_positions:
+            return False
 
     return True
 
@@ -189,18 +196,8 @@ def draw_lines_sent(surface, col, sx, sy):
                      (sx - 20, sy + play_height))
 
 
-def get_accepted_positions(grid):
-    accepted_positions = [[(j, i) for j in range(10) if grid[i][j] == (0, 0, 0)] for i in range(20)]
-    accepted_positions = [j for sub in accepted_positions for j in sub]
-    return accepted_positions
-
-
 def check_lost(locked_positions):
-    for pos in locked_positions:
-        x, y = pos
-        if y < 0:
-            return True
-    return False
+    return any(v[1] < 0 for v in locked_positions)
 
 
 def clear_rows(grid, locked):
@@ -228,3 +225,38 @@ def clear_rows(grid, locked):
         else:
             i = i + 1
     return lines_cleared
+
+
+def draw_held_shape(shape, surface, position, label, sy):
+    sx = position - 150
+    sy = sy + 40
+    if shape:
+        shape.rotation = 0
+        shape_layout = shape.shape[shape.rotation % len(shape.shape)]
+
+        for i, line in enumerate(shape_layout):
+            row = list(line)
+            for j, column in enumerate(row):
+                if column == '0':
+                    pygame.draw.rect(surface, shape.color, (sx + j * 30, sy + i * 30, 30, 30), 0)
+
+    surface.blit(label, (sx + 10, sy - 30))
+
+
+def draw_next_shape(shape, surface, position, label, top_left_y):
+    sx = position + 300 + 50
+    sy = top_left_y + 600 / 2 - 100
+    shape_layout = shape.shape[shape.rotation % len(shape.shape)]
+
+    for i, line in enumerate(shape_layout):
+        row = list(line)
+        for j, column in enumerate(row):
+            if column == '0':
+                pygame.draw.rect(surface, shape.color, (sx + j * 30, sy + i * 30, 30, 30), 0)
+
+    surface.blit(label, (sx + 10, sy - 30))
+
+
+# Tetris Title
+def draw_title(surface, label, position, game_width):
+    surface.blit(label, (position + game_width / 2 - (label.get_width() / 2), 30))

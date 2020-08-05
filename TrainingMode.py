@@ -29,18 +29,18 @@ def get_args(training_type):
     parser.add_argument("--final_epsilon", type=float, default=1e-3)
     parser.add_argument("--saved_path", type=str, default="trained_models")
     parser.add_argument("--log_path", type=str, default="tensorboard")
-    parser.add_argument("--save_interval", type=int, default=1000)
+    parser.add_argument("--save_interval", type=int, default=500)
 
     if training_type == "cheater":
         parser.add_argument("--num_decay_epochs", type=float, default=2000)
         parser.add_argument("--num_epochs", type=int, default=3000)
-        parser.add_argument("--replay_memory_size", type=int, default=50000,
+        parser.add_argument("--replay_memory_size", type=int, default=20000,
                             help="Number of epoches between testing phases")
 
     elif training_type == "fair":
-        parser.add_argument("--num_decay_epochs", type=float, default=2000)
-        parser.add_argument("--num_epochs", type=int, default=3000)
-        parser.add_argument("--replay_memory_size", type=int, default=300000,
+        parser.add_argument("--num_decay_epochs", type=float, default=1500)
+        parser.add_argument("--num_epochs", type=int, default=2000)
+        parser.add_argument("--replay_memory_size", type=int, default=10000,
                             help="Number of epoches between testing phases")
 
     args = parser.parse_args()
@@ -60,7 +60,10 @@ def train(opt, training_type, number_of_features):
         shutil.rmtree(opt.log_path)
     os.makedirs(opt.log_path)
     writer = SummaryWriter(opt.log_path)
-    screen = pygame.display.set_mode((1400, 700), pygame.DOUBLEBUF)
+
+    screen = pygame.display.set_mode((1400, 700))
+    screen.fill((0, 0, 0))
+
     if training_type == "fair":
         env = Fair(screen, "train", True)
     else:
@@ -70,16 +73,13 @@ def train(opt, training_type, number_of_features):
     criterion = nn.MSELoss()
 
     state = env.reset().to(device)
-    #model.to(device)
-    #state = state.to(device)
 
     replay_memory = deque(maxlen=opt.replay_memory_size)
     epoch = 0
-    max_steps = 2500
-    steps = 0
+
     score = []
     return_button = Button.Button((61, 97, 128), 575, 625, 200, 50, 'Return')
-    screen.fill((0, 0, 0))
+
     pygame.display.flip()
     while epoch < opt.num_epochs:
         next_steps = env.get_next_states()
@@ -90,8 +90,7 @@ def train(opt, training_type, number_of_features):
         random_action = u <= epsilon
         next_actions, next_states = zip(*next_steps.items())
         next_states = torch.stack(next_states).to(device)
-        #if torch.cuda.is_available():
-        #    next_states = next_states.to(device)
+
         model.eval()
         with torch.no_grad():
             predictions = model(next_states)[:, 0]
@@ -103,14 +102,9 @@ def train(opt, training_type, number_of_features):
 
         next_state = next_states[index, :].to(device)
         action = next_actions[index]
-        steps = steps + 1
-        if steps >= max_steps:
-            reward, done = env.step(action, lines_sent=1)
-        else:
-            reward, done = env.step(action)
 
-        #if torch.cuda.is_available():
-        #    next_state = next_state.to(device)
+        reward, done = env.step(action)
+
         replay_memory.append([state, reward, next_state, done])
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -127,24 +121,18 @@ def train(opt, training_type, number_of_features):
                 else:
                     return_button.color = (147, 150, 153)
 
-        area = pygame.Rect(0, 0, 800, 700)
-        # screen.fill((0, 0, 0), area)
+        area = pygame.Rect(0, 75, 900, 625)
         return_button.draw(screen)
         fps = font_small.render(str(int(clock.get_fps())), True, pygame.Color('white'))
-        screen.blit(fps, (50, 50))
+        screen.blit(fps, (25, 75))
         clock.tick(200)
         pygame.display.update(area)
-        if steps >= max_steps:
-            done = True
-        if done:
-            steps = 0
-            final_score = env.last_score
-            final_tetrominoes = env.total_pieces_placed
+        if done or (env.total_pieces_placed >= 200):
+            final_score = env.score
+            final_pieces_placed = env.total_pieces_placed
             final_cleared_lines = env.total_lines_cleared
             max_combo = env.max_combo
             state = env.reset().to(device)
-            #if torch.cuda.is_available():
-            #    state = state.to(device)
         else:
             state = next_state
             continue
@@ -157,11 +145,6 @@ def train(opt, training_type, number_of_features):
         state_batch = torch.stack(tuple(state for state in state_batch)).to(device)
         reward_batch = torch.from_numpy(np.array(reward_batch, dtype=np.float32)[:, None]).to(device)
         next_state_batch = torch.stack(tuple(state for state in next_state_batch)).to(device)
-
-        #if torch.cuda.is_available():
-        #    state_batch = state_batch.to(device)
-        #    reward_batch = reward_batch.to(device)
-        #    next_state_batch = next_state_batch.to(device)
 
         q_values = model(state_batch)
         model.eval()
@@ -177,18 +160,18 @@ def train(opt, training_type, number_of_features):
         loss = criterion(q_values, y_batch)
         loss.backward()
         optimizer.step()
-        graph_results(score)
+        graph_results(opt.num_epochs, score)
 
         print("Epoch: {}/{}, Action: {}, Score: {}, Tetrominoes {}, Cleared lines: {}, Max Combo: {}".format(
             epoch,
             opt.num_epochs,
             action,
             final_score,
-            final_tetrominoes,
+            final_pieces_placed,
             final_cleared_lines,
             max_combo))
         writer.add_scalar('Train/Score', final_score, epoch - 1)
-        writer.add_scalar('Train/Tetrominoes', final_tetrominoes, epoch - 1)
+        writer.add_scalar('Train/Tetrominoes', final_pieces_placed, epoch - 1)
         writer.add_scalar('Train/Cleared lines', final_cleared_lines, epoch - 1)
 
         if epoch > 0 and epoch % opt.save_interval == 0:
@@ -199,13 +182,11 @@ def train(opt, training_type, number_of_features):
     display(screen)
 
 
-def graph_results(score):
-    fig = pylab.figure(figsize=[4, 4],  # Inches
-                       dpi=90,  # 100 dots per inch, so the resulting buffer is 400x400 pixels
-                       )
+def graph_results(score, length):
+    fig = pylab.figure(figsize=[4, 4], dpi=90)
     ax = fig.gca()
     ax.plot(score)
-    ax.set_title("Agents score vs Iteration")
+    ax.set_title("Agents score over {}/{} Iteration".format(length, len(score)))
     ax.set_xlabel('Iteration')
     ax.set_ylabel('Score')
 

@@ -1,6 +1,7 @@
 import torch.nn as nn
 
 
+# Neural network
 class DeepQNetwork(nn.Module):
     def __init__(self, number_of_features=4):
         super(DeepQNetwork, self).__init__()

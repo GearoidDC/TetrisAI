@@ -1,7 +1,7 @@
 import pygame
 import sys
 import Button
-import train
+import TrainingMode
 from Settings import Setting
 
 # Default Settings
@@ -30,7 +30,7 @@ buttons = [play_vs_cheater_ai_button, play_vs_fair_ai_button, return_button]
 # Creates Training Menu
 def main():
     pygame.display.set_caption("Tetris")
-    screen = pygame.display.set_mode((screen_width, screen_height),pygame.DOUBLEBUF)
+    screen = pygame.display.set_mode((screen_width, screen_height))
     go = True
     while go:
         # Creates responses to user inputs
@@ -40,9 +40,9 @@ def main():
             pos = pygame.mouse.get_pos()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if play_vs_cheater_ai_button.is_over(pos):
-                    go = train.main("cheater", 4)
+                    go = TrainingMode.main("cheater", 4)
                 elif play_vs_fair_ai_button.is_over(pos):
-                    go = train.main("fair", 6)
+                    go = TrainingMode.main("fair", 5)
                 elif return_button.is_over(pos):
                     go = False
             if event.type == pygame.MOUSEMOTION:

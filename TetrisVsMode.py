@@ -20,6 +20,7 @@ button_centred = screen_centre - button_width / 2
 
 
 def start(screen, saved_path="fair_tetris", mode="vs"):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     font_small = pygame.font.SysFont('comicsans', 30)
     return_button = Button.Button(button_colour_off, 625, 625, 150, 50, 'Return')
     pygame.display.set_caption(saved_path)
@@ -27,11 +28,12 @@ def start(screen, saved_path="fair_tetris", mode="vs"):
         torch.cuda.manual_seed(123)
     else:
         torch.manual_seed(123)
-    if torch.cuda.is_available():
-        model = torch.load("trained_models/{}".format(saved_path))
-    else:
-        model = torch.load("trained_models/{}".format(saved_path), map_location=lambda storage, loc: storage)
+
+    model = torch.load("trained_models/{}".format(saved_path)).to(device)
+
     model.eval()
+
+    screen.fill((0, 0, 0))
     if mode == "vs":
         human_tetris = TetrisHuman.Tetris(screen)
         draw = False
@@ -43,30 +45,27 @@ def start(screen, saved_path="fair_tetris", mode="vs"):
         env = Cheater(screen, "play", draw)
     env.reset()
 
-    if torch.cuda.is_available():
-        model.cuda()
-
-    clock = pygame.time.Clock()
-    screen.fill((0, 0, 0))
     pygame.display.update()
-    holder = 0
+
+    # Runs vs mode or solo mode
     if mode == "vs":
-        vs_mode(return_button, env, model, holder, screen, human_tetris, clock)
+        vs_mode(return_button, env, model, screen, human_tetris)
     else:
-        solo_mode(return_button, env, model, holder, screen, font_small, clock)
+        solo_mode(return_button, env, model, screen, font_small)
 
     return True
 
 
-def vs_mode(return_button, env, model, holder, screen, human_tetris, clock):
+def vs_mode(return_button, env, model, screen, human_tetris):
+    clock = pygame.time.Clock()
     fall_time = 0
     fall_speed = 0.27
     lost = False
     won = False
     run = True
     human_lines = 0
+    holder = 0
     while run:
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.display.quit()
@@ -125,7 +124,11 @@ def vs_mode(return_button, env, model, holder, screen, human_tetris, clock):
             won = False
 
 
-def solo_mode(return_button, env, model, holder, screen, font_small, clock):
+# Solo mode
+def solo_mode(return_button, env, model, screen, font_small):
+    clock = pygame.time.Clock()
+    area = pygame.Rect(0, 75, 900, 625)
+    holder = 0
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -143,23 +146,20 @@ def solo_mode(return_button, env, model, holder, screen, font_small, clock):
         reward, won = ai(env, model, holder)
         return_button.draw(screen)
         fps = font_small.render(str(int(clock.get_fps())), True, pygame.Color('white'))
-        screen.blit(fps, (50, 50))
+        screen.blit(fps, (25, 75))
         clock.tick(200)
-        pygame.display.flip()
+        pygame.display.update(area)
         if won:
             env.reset()
 
 
-def user_controls():
-    red = ""
-
-
+# Controls Agent
 def ai(env, model, holder):
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     next_steps = env.get_next_states()
     next_actions, next_states = zip(*next_steps.items())
-    next_states = torch.stack(next_states)
-    if torch.cuda.is_available():
-        next_states = next_states.cuda()
+    next_states = torch.stack(next_states).to(device)
+
     predictions = model(next_states)[:, 0]
     index = torch.argmax(predictions).item()
     action = next_actions[index]
@@ -167,68 +167,45 @@ def ai(env, model, holder):
     return reward, won
 
 
-def gravity():
-    red = ""
-
-
+# End game display
 def display(win, lose, screen):
     pygame.draw.rect(screen, dark_grey, (1400 / 2 - 200, 200, 400, 300), 0)
     play_again_button = Button.Button(button_colour_off, 525, 300, 350, 50, 'Play Again?')
     selection_menu_button = Button.Button(button_colour_off, 525, 400, 350, 50, 'Selection Menu')
-    if win:
-        draw_text_middle("You Win", 40, (255, 255, 255), screen)
+    if win and lose:
+        end_text = "Draw"
+    elif win:
+        end_text = "You Win"
+    else:
+        end_text = "You Lose"
+    draw_text_middle(end_text, 40, (255, 255, 255), screen)
+    pygame.display.update()
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.display.quit()
+                quit()
+            pos = pygame.mouse.get_pos()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if play_again_button.is_over(pos):
+                    return True
+                elif selection_menu_button.is_over(pos):
+                    return False
+            if event.type == pygame.MOUSEMOTION:
+                if play_again_button.is_over(pos):
+                    play_again_button.color = (61, 97, 128)
+                else:
+                    play_again_button.color = (147, 150, 153)
+                if selection_menu_button.is_over(pos):
+                    selection_menu_button.color = (61, 97, 128)
+                else:
+                    selection_menu_button.color = (147, 150, 153)
+        play_again_button.draw(screen)
+        selection_menu_button.draw(screen)
         pygame.display.update()
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.display.quit()
-                    quit()
-                pos = pygame.mouse.get_pos()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if play_again_button.is_over(pos):
-                        return True
-                    elif selection_menu_button.is_over(pos):
-                        return False
-                if event.type == pygame.MOUSEMOTION:
-                    if play_again_button.is_over(pos):
-                        play_again_button.color = (61, 97, 128)
-                    else:
-                        play_again_button.color = (147, 150, 153)
-                    if selection_menu_button.is_over(pos):
-                        selection_menu_button.color = (61, 97, 128)
-                    else:
-                        selection_menu_button.color = (147, 150, 153)
-            play_again_button.draw(screen)
-            selection_menu_button.draw(screen)
-            pygame.display.update()
-    if lose:
-        draw_text_middle("You Lose", 40, (255, 255, 255), screen)
-        pygame.display.update()
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.display.quit()
-                    quit()
-                pos = pygame.mouse.get_pos()
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    if play_again_button.is_over(pos):
-                        return True
-                    elif selection_menu_button.is_over(pos):
-                        return False
-                if event.type == pygame.MOUSEMOTION:
-                    if play_again_button.is_over(pos):
-                        play_again_button.color = (61, 97, 128)
-                    else:
-                        play_again_button.color = (147, 150, 153)
-                    if selection_menu_button.is_over(pos):
-                        selection_menu_button.color = (61, 97, 128)
-                    else:
-                        selection_menu_button.color = (147, 150, 153)
-            play_again_button.draw(screen)
-            selection_menu_button.draw(screen)
-            pygame.display.update()
 
 
+# Draws text
 def draw_text_middle(text, size, color, screen):
     font = pygame.font.SysFont('comicsans', size, bold=True)
     label = font.render(text, 1, color)
