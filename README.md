@@ -1,25 +1,25 @@
-#Tetris Agent GUI
+# Tetris Agent GUI
 
 
-###Features Used:
+### Features Used:
 **Cheater Tetris:**
 
-Lines Cleared
-Height 
-Holes
-Bumpiness
+* Lines Cleared
+* Height 
+* Holes
+* Bumpiness
 
 **Fair Tetris:**
 
-Lines Cleared
-Height 
-Holes
-Bumpiness
-Distance left or right
+* Lines Cleared
+* Height 
+* Holes
+* Bumpiness
+* Distance left or right
 
 
 
-###Todo List:
+### Todo List:
 
 
 * Toggle for training display
