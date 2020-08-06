@@ -2,14 +2,15 @@ import pygame
 
 
 class Button:
-    def __init__(self, color, x, y, button_width, button_height, text=''):
+    def __init__(self, color, x, y, button_width, button_height, text='',value=0):
         self.color = color
         self.x = x
         self.y = y
         self.width = button_width
         self.height = button_height
-        self.font = pygame.font.SysFont('Arial', 60)
+        self.font = pygame.font.SysFont('Arial', 30)
         self.text = text
+        self.value = value
 
     def draw(self, win, outline=None):
         # Call this method to draw the button on the screen
@@ -24,7 +25,7 @@ class Button:
                 self.x + (self.width / 2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
 
     def is_over(self, pos):
-        # Pos is the mouse position or a tuple of (x,y) coordinates
+        # Returns true if the cords passed are over the button
         if self.x < pos[0] < self.x + self.width:
             if self.y < pos[1] < self.y + self.height:
                 return True

@@ -21,7 +21,7 @@ button_centred = screen_centre - button_width / 2
 
 def start(screen, saved_path="fair_tetris", mode="vs"):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    font_small = pygame.font.SysFont('Arial', 30)
+    font_small = pygame.font.SysFont('Arial', 20)
     return_button = Button.Button(button_colour_off, 625, 625, 150, 50, 'Return')
     pygame.display.set_caption(saved_path)
     print(torch.cuda.is_available())
@@ -58,12 +58,18 @@ def start(screen, saved_path="fair_tetris", mode="vs"):
 
 
 def vs_mode(return_button, env, model, screen, human_tetris):
+    speed_1 = Button.Button(button_colour_on, 610, 25, 30, 30, '1x', 1)
+    speed_2 = Button.Button(button_colour_off, 650, 25, 30, 30, '2x', 2)
+    speed_3 = Button.Button(button_colour_off, 690, 25, 30, 30, '3x', 3)
+    buttons = [speed_1, speed_2, speed_3]
     clock = pygame.time.Clock()
     fall_time = 0
     fall_speed = 0.27
+    ai_speed = 0
     lost = False
     won = False
     run = True
+    speed = 1
     human_lines = 0
     holder = 0
     while run:
@@ -93,15 +99,17 @@ def vs_mode(return_button, env, model, screen, human_tetris):
                     return_button.color = (61, 97, 128)
                 else:
                     return_button.color = (147, 150, 153)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for x in range(len(buttons)):
+                    if buttons[x].is_over(pos):
+                        speed = buttons[x].value
+                    buttons[x].color = button_colour_off
+                buttons[speed - 1].color = button_colour_on
         if human_lines > 0:
             holder += human_lines
             human_lines = 0
-        if fall_time / 1000 >= fall_speed:
-            fall_time = 0
-            lost, human_lines = human_tetris.main(0)
-            if human_lines > 0:
-                holder += human_lines
-                human_lines = 0
+        if (ai_speed / 2000) * speed >= fall_speed:
             reward, won = ai(env, model, holder)
             holder = 0
             if reward > 0:
@@ -109,8 +117,18 @@ def vs_mode(return_button, env, model, screen, human_tetris):
                 if human_lines > 0:
                     holder += human_lines
                     human_lines = 0
+            ai_speed = 0
+        if fall_time / 1000 >= fall_speed:
+            lost, human_lines = human_tetris.main(0)
+            if human_lines > 0:
+                holder += human_lines
+                human_lines = 0
+            fall_time = 0
         fall_time += clock.get_rawtime()
+        ai_speed += clock.get_rawtime()
         clock.tick()
+        for x in range(len(buttons)):
+            buttons[x].draw(screen)
         return_button.draw(screen)
         pygame.display.update()
 

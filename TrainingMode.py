@@ -49,7 +49,7 @@ def get_args(training_type):
 def train(opt, training_type, number_of_features):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(torch.cuda.is_available())
-    font_small = pygame.font.SysFont('Arial', 30)
+    font_small = pygame.font.SysFont('Arial', 20)
     clock = pygame.time.Clock()
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)

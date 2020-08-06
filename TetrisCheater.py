@@ -21,8 +21,8 @@ class Tetris:
         self.total_lines_cleared = 0
         self.screen = screen
         self.locked_positions = {}
-        font_header = pygame.font.SysFont('Arial', 60)
-        self.font_small = pygame.font.SysFont('Arial', 30)
+        font_header = pygame.font.SysFont('Arial', 40)
+        self.font_small = pygame.font.SysFont('Arial', 20)
         self.label = font_header.render('AI Player', 1, (255, 255, 255))
         self.label_held_piece = self.font_small.render('Held Piece', 1, (255, 255, 255))
         self.label_next_piece = self.font_small.render('Next Piece', 1, (255, 255, 255))

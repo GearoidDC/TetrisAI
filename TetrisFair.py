@@ -25,8 +25,8 @@ class Tetris:
         self.combo = 0
         self.max_combo = 0
         self.locked_positions = {}
-        self.font_small = pygame.font.SysFont('Arial', 30)
-        font = pygame.font.SysFont('Arial', 60)
+        self.font_small = pygame.font.SysFont('Arial', 20)
+        font = pygame.font.SysFont('Arial', 40)
         self.label = font.render('AI Player', 1, (255, 255, 255))
         self.label_held_piece = self.font_small.render('Held Piece', 1, (255, 255, 255))
         self.label_next_piece = self.font_small.render('Next Piece', 1, (255, 255, 255))
