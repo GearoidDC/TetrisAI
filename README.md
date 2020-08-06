@@ -25,4 +25,3 @@
 * Toggle for training display
 * Update font
 * Change scoring system
-* Add speed settings vs mode

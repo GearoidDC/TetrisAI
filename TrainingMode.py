@@ -122,8 +122,8 @@ def train(opt, training_type, number_of_features):
 
         area = pygame.Rect(0, 75, 900, 625)
         return_button.draw(screen)
-        fps = font_small.render(str(int(clock.get_fps())), True, pygame.Color('white'))
-        screen.blit(fps, (25, 75))
+        fps = font_small.render("fps:" + str(int(clock.get_fps())), True, pygame.Color('white'))
+        screen.blit(fps, (10, 75))
         clock.tick(200)
         pygame.display.update(area)
         if done or (env.total_pieces_placed >= 200):

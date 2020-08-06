@@ -68,20 +68,6 @@ class Tetris:
         else:
             return copy.deepcopy(self.held_piece)
 
-    def draw_window(self, surface, position, grid, lines_sent):
-
-        for i in range(len(grid)):
-            for j in range(len(grid[i])):
-                pygame.draw.rect(surface, grid[i][j], (position + j * 30, self.top_left_y + i * 30, 30, 30), 0)
-
-        # draw grid and border
-        draw_grid(surface, 20, 10, position, self.top_left_y, self.play_width, self.play_height)
-        if not self.draw:
-            for line in range(lines_sent):
-                pygame.draw.rect(surface, (0, 128, 128), (position - 40, 685 - line * 15, 20, 15), 0)
-            draw_lines_sent(surface, 20, position, self.top_left_y)
-        pygame.draw.rect(surface, (255, 0, 0), (position, self.top_left_y, self.play_width, self.play_height), 5)
-
     def get_state_properties(self, grid):
         lines_cleared, board = cleared(grid)
         number_of_holes = holes(board)
@@ -282,8 +268,9 @@ class Tetris:
             self.draw_stats()
         else:
             self.screen.fill((0, 0, 0), area)
+            draw_lines_sent(self.screen, 20, self.top_left_x, self.top_left_y, self.counter_human)
 
-        self.draw_window(self.screen, self.top_left_x, grid, self.counter_human)
+        draw_window(self.screen, self.top_left_x, grid, self.play_width, self.play_height, self.top_left_y)
         draw_next_shape(self.next_piece, self.screen, self.top_left_x, self.label_next_piece, self.top_left_y)
         draw_held_shape(self.held_piece, self.screen, self.top_left_x, self.label_held_piece, self.top_left_y)
         if not self.draw:

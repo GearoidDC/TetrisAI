@@ -43,8 +43,8 @@ class Tetris:
         self.top_score = 0
         self.move = 0
         self.x_move = 0
-        self.area = pygame.Rect(0, 75, 700, 600)
-        self.small_area = pygame.Rect(self.top_left_x - 50, self.top_left_y + 100, 400, 600)
+        self.area = pygame.Rect(0, 75, 700, 625)
+        self.small_area = pygame.Rect(self.top_left_x - 50, self.top_left_y + 100, 400, 660)
         self.initial_grid = [[(0, 0, 0) for x in range(10)] for x in range(20)]
         draw_title(self.screen, self.label, self.top_left_x, self.play_width)
 
@@ -69,20 +69,6 @@ class Tetris:
             return copy.deepcopy(self.next_piece)
         else:
             return copy.deepcopy(self.held_piece)
-
-    def draw_window(self, surface, position, grid, lines_sent):
-
-        for i in range(len(grid)):
-            for j in range(len(grid[i])):
-                pygame.draw.rect(surface, grid[i][j], (position + j * 30, self.top_left_y + i * 30, 30, 30), 0)
-
-        # draw grid and border
-        draw_grid(surface, 20, 10, position, self.top_left_y, self.play_width, self.play_height)
-        if not self.draw:
-            for line in range(lines_sent):
-                pygame.draw.rect(surface, (0, 128, 128), (position - 40, 685 - line * 15, 20, 15), 0)
-            draw_lines_sent(surface, 20, position, self.top_left_y)
-        pygame.draw.rect(surface, (255, 0, 0), (position, self.top_left_y, self.play_width, self.play_height), 5)
 
     def get_state_properties(self, grid):
         lines_cleared, board = cleared(grid)
@@ -254,12 +240,11 @@ class Tetris:
                         x, y = shape_pos[i]
                         if y > -1:
                             grid[y][x] = self.current_piece.color
-                    self.draw_window(self.screen, self.top_left_x, grid, self.counter_human)
+                    draw_window(self.screen, self.top_left_x, grid, self.play_width,
+                                self.play_height, self.top_left_y)
                     pygame.display.update(self.small_area)
                     self.current_piece.y += 1
                     grid = create_grid(self.locked_positions)
-                # else:
-                #    self.move = 0
                 self.current_piece.y -= 1
             else:
                 self.current_piece.y -= 1
@@ -312,7 +297,7 @@ class Tetris:
                 elif lines_cleared < self.counter_human:
                     self.counter_human = self.counter_human - lines_cleared
                 # Adds a row and moves rows up
-                while self.counter_human > 0:
+                if self.counter_human > 0:
                     for j in range(10):
                         for i in range(20):
                             if (j, i) in self.locked_positions:
@@ -340,8 +325,9 @@ class Tetris:
             self.draw_stats()
         else:
             self.screen.fill((0, 0, 0), self.area)
+            draw_lines_sent(self.screen, 20, self.top_left_x, self.top_left_y, self.counter_human)
 
-        self.draw_window(self.screen, self.top_left_x, grid, self.counter_human)
+        draw_window(self.screen, self.top_left_x, grid, self.play_width, self.play_height, self.top_left_y)
         draw_next_shape(self.next_piece, self.screen, self.top_left_x, self.label_next_piece, self.top_left_y)
         draw_held_shape(self.held_piece, self.screen, self.top_left_x, self.label_held_piece, self.top_left_y)
 
@@ -352,5 +338,4 @@ class Tetris:
             out = score
         else:
             out = lines_cleared
-
         return out, self.run

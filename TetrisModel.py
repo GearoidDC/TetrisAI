@@ -184,8 +184,10 @@ def valid_space(current_piece, accepted_positions):
     return True
 
 
-def draw_lines_sent(surface, col, sx, sy):
+def draw_lines_sent(surface, col, sx, sy,lines_sent):
     play_height = 600
+    for line in range(lines_sent):
+        pygame.draw.rect(surface, (0, 128, 128), (sx - 40, 675 - line * 15, 20, 15), 0)
     for i in range(col):
         pygame.draw.line(surface, (128, 128, 128), (sx - 40, sy + i * 15 + play_height / 2),
                          (sx - 20, sy + i * 15 + play_height / 2))  # horizontal lines
@@ -227,6 +229,17 @@ def clear_rows(grid, locked):
     return lines_cleared
 
 
+def draw_window(surface, position, grid,play_width,play_height,top_left_y):
+
+    for i in range(len(grid)):
+        for j in range(len(grid[i])):
+            pygame.draw.rect(surface, grid[i][j], (position + j * 30, top_left_y + i * 30, 30, 30), 0)
+
+    # draw grid and border
+    draw_grid(surface, 20, 10, position, top_left_y, play_width, play_height)
+    pygame.draw.rect(surface, (255, 0, 0), (position, top_left_y, play_width, play_height), 5)
+
+
 def draw_held_shape(shape, surface, position, label, sy):
     sx = position - 150
     sy = sy + 40
@@ -243,6 +256,7 @@ def draw_held_shape(shape, surface, position, label, sy):
     surface.blit(label, (sx + 10, sy - 30))
 
 
+# Draw next shape
 def draw_next_shape(shape, surface, position, label, top_left_y):
     sx = position + 300 + 50
     sy = top_left_y + 600 / 2 - 100

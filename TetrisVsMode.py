@@ -164,8 +164,8 @@ def solo_mode(return_button, env, model, screen, font_small):
                     return_button.color = (147, 150, 153)
         reward, won = ai(env, model, holder)
         return_button.draw(screen)
-        fps = font_small.render(str(int(clock.get_fps())), True, pygame.Color('white'))
-        screen.blit(fps, (25, 75))
+        fps = font_small.render("fps:" + str(int(clock.get_fps())), True, pygame.Color('white'))
+        screen.blit(fps, (10, 75))
         clock.tick(200)
         pygame.display.update(area)
         if won:

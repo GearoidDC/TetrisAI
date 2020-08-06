@@ -1,10 +1,8 @@
-import pygame
 from TetrisModel import *
 
 
 class Tetris:
     def __init__(self, screen):
-        pygame.font.init()
         self.screen = screen
         self.s_width = 1400
         self.s_height = 700
@@ -31,6 +29,8 @@ class Tetris:
         self.change_piece = False
         self.run = False
 
+        draw_title(self.screen, self.label, self.top_left_x, self.play_width)
+
     def get_held_piece(self):
         if self.switch_piece:
             if not self.held_piece:
@@ -45,18 +45,6 @@ class Tetris:
                 self.current_piece = holder
             self.current_piece.y = self.held_piece.y
             self.current_piece.x = self.held_piece.x
-
-    def draw_window(self, surface, position, grid, lines_sent):
-        for i in range(len(grid)):
-            for j in range(len(grid[i])):
-                pygame.draw.rect(surface, grid[i][j], (position + j * 30, self.top_left_y + i * 30, 30, 30), 0)
-
-        # draw grid and border
-        draw_grid(surface, 20, 10, position, self.top_left_y, self.play_width, self.play_height)
-        for line in range(lines_sent):
-            pygame.draw.rect(surface, (0, 128, 128), (position - 40, 685 - line * 15, 20, 15), 0)
-        draw_lines_sent(surface, 20, position, self.top_left_y)
-        pygame.draw.rect(surface, (255, 0, 0), (position, self.top_left_y, self.play_width, self.play_height), 5)
 
     def reset(self):
         self.locked_positions = {}
@@ -73,7 +61,7 @@ class Tetris:
     # User controls
     def controls(self, movement):
         # Moves piece left
-        accepted_positions = [*self.locked_positions]
+        accepted_positions = self.locked_positions
         if movement == 1:
             self.current_piece.x -= 1
             if not valid_space(self.current_piece, accepted_positions):
@@ -126,15 +114,15 @@ class Tetris:
         return False
 
     def draw_screen(self, grid):
-        self.screen.fill((0, 0, 0), (self.top_left_x - 150, 0, 650, 700))
-        self.draw_window(self.screen, self.top_left_x, grid, self.counter_ai)
-        draw_title(self.screen, self.label, self.top_left_x, self.play_width)
+        self.screen.fill((0, 0, 0), (self.top_left_x - 150, 75, 700, 625))
+        draw_window(self.screen, self.top_left_x, grid, self.play_width, self.play_height, self.top_left_y)
+        draw_lines_sent(self.screen, 20, self.top_left_x, self.top_left_y, self.counter_ai)
         draw_next_shape(self.next_piece, self.screen, self.top_left_x, self.label_next_piece, self.top_left_y)
         draw_held_shape(self.held_piece, self.screen, self.top_left_x, self.label_held_piece, self.top_left_y)
         pygame.display.update(self.top_left_x - 50, 0, 350, 700)
 
     def piece_falling(self):
-        accepted_positions = [*self.locked_positions]
+        accepted_positions = self.locked_positions
         self.current_piece.y += 1
         if not (valid_space(self.current_piece, accepted_positions)) and self.current_piece.y > 0:
             self.current_piece.y -= 1
