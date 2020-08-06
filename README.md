@@ -1,9 +1,28 @@
-#Blank
+#Tetris Agent GUI
 
-Features used
 
+###Features Used:
+**Cheater Tetris:**
+
+Lines Cleared
 Height 
 Holes
 Bumpiness
 
-python -m cProfile -s tottime MainMenu.py
+**Fair Tetris:**
+
+Lines Cleared
+Height 
+Holes
+Bumpiness
+Distance left or right
+
+
+
+###Todo List:
+
+
+* Toggle for training display
+* Update font
+* Change scoring system
+* Add speed settings vs mode
