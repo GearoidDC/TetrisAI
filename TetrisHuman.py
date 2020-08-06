@@ -13,8 +13,8 @@ class Tetris:
         self.top_left_x = (self.s_width - self.play_width) // 1.3
         self.top_left_y = self.s_height - self.play_height - 10
 
-        font = pygame.font.SysFont('comicsans', 60)
-        self.font_small = pygame.font.SysFont('comicsans', 30)
+        font = pygame.font.SysFont('Arial', 60)
+        self.font_small = pygame.font.SysFont('Arial', 30)
         self.label = font.render('Human Player', 1, (255, 255, 255))
         self.label_held_piece = self.font_small.render('Held Piece', 1, (255, 255, 255))
         self.label_next_piece = self.font_small.render('Next Piece', 1, (255, 255, 255))

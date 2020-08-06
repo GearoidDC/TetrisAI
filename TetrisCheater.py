@@ -21,8 +21,8 @@ class Tetris:
         self.total_lines_cleared = 0
         self.screen = screen
         self.locked_positions = {}
-        font_header = pygame.font.SysFont('comicsans', 60)
-        self.font_small = pygame.font.SysFont('comicsans', 30)
+        font_header = pygame.font.SysFont('Arial', 60)
+        self.font_small = pygame.font.SysFont('Arial', 30)
         self.label = font_header.render('AI Player', 1, (255, 255, 255))
         self.label_held_piece = self.font_small.render('Held Piece', 1, (255, 255, 255))
         self.label_next_piece = self.font_small.render('Next Piece', 1, (255, 255, 255))
@@ -273,7 +273,7 @@ class Tetris:
             self.max_combo = self.combo
         score = 1 * line_placed + pow(lines_cleared, 2) * 10 + self.combo * 5
         self.score += score
-        area = pygame.Rect(0, self.top_left_y, 650, 700)
+        area = pygame.Rect(0, 75, 700, 600)
         if self.run or (lines_sent == 1 and self.mode == "train"):
             self.last_score = self.score
             if self.top_score < self.score:

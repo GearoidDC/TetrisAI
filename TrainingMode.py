@@ -10,12 +10,11 @@ import pylab
 import numpy as np
 import torch
 import torch.nn as nn
-from tensorboardX import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 from DeepQLearning import DeepQNetwork
 from TetrisCheater import Tetris as Cheater
 from TetrisFair import Tetris as Fair
 from collections import deque
-
 matplotlib.use("Agg")
 
 
@@ -49,8 +48,8 @@ def get_args(training_type):
 
 def train(opt, training_type, number_of_features):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-    font_small = pygame.font.SysFont('comicsans', 30)
+    print(torch.cuda.is_available())
+    font_small = pygame.font.SysFont('Arial', 30)
     clock = pygame.time.Clock()
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
@@ -160,7 +159,7 @@ def train(opt, training_type, number_of_features):
         loss = criterion(q_values, y_batch)
         loss.backward()
         optimizer.step()
-        graph_results(opt.num_epochs, score)
+        graph_results(score, opt.num_epochs)
 
         print("Epoch: {}/{}, Action: {}, Score: {}, Tetrominoes {}, Cleared lines: {}, Max Combo: {}".format(
             epoch,
@@ -232,7 +231,7 @@ def display(screen):
 
 
 def draw_text_middle(text, size, color, screen):
-    font = pygame.font.SysFont('comicsans', size, bold=True)
+    font = pygame.font.SysFont('Arial', size, bold=True)
     label = font.render(text, 1, color)
 
     screen.blit(label, (1400 / 2 - (label.get_width() / 2), 250 - label.get_height() / 2))

@@ -25,8 +25,8 @@ class Tetris:
         self.combo = 0
         self.max_combo = 0
         self.locked_positions = {}
-        self.font_small = pygame.font.SysFont('comicsans', 30)
-        font = pygame.font.SysFont('comicsans', 60)
+        self.font_small = pygame.font.SysFont('Arial', 30)
+        font = pygame.font.SysFont('Arial', 60)
         self.label = font.render('AI Player', 1, (255, 255, 255))
         self.label_held_piece = self.font_small.render('Held Piece', 1, (255, 255, 255))
         self.label_next_piece = self.font_small.render('Next Piece', 1, (255, 255, 255))
@@ -43,7 +43,7 @@ class Tetris:
         self.top_score = 0
         self.move = 0
         self.x_move = 0
-        self.area = pygame.Rect(self.top_left_x - 50, self.top_left_y, 550, 700)
+        self.area = pygame.Rect(0, 75, 700, 600)
         self.small_area = pygame.Rect(self.top_left_x - 50, self.top_left_y + 100, 400, 600)
         self.initial_grid = [[(0, 0, 0) for x in range(10)] for x in range(20)]
         draw_title(self.screen, self.label, self.top_left_x, self.play_width)

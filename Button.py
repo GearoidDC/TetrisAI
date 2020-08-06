@@ -8,7 +8,7 @@ class Button:
         self.y = y
         self.width = button_width
         self.height = button_height
-        self.font = pygame.font.SysFont('comicsans', 60)
+        self.font = pygame.font.SysFont('Arial', 60)
         self.text = text
 
     def draw(self, win, outline=None):

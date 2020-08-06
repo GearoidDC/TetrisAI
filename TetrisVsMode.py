@@ -21,15 +21,16 @@ button_centred = screen_centre - button_width / 2
 
 def start(screen, saved_path="fair_tetris", mode="vs"):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    font_small = pygame.font.SysFont('comicsans', 30)
+    font_small = pygame.font.SysFont('Arial', 30)
     return_button = Button.Button(button_colour_off, 625, 625, 150, 50, 'Return')
     pygame.display.set_caption(saved_path)
+    print(torch.cuda.is_available())
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
     else:
         torch.manual_seed(123)
 
-    model = torch.load("trained_models/{}".format(saved_path)).to(device)
+    model = torch.load(("trained_models/{}".format(saved_path)), map_location=lambda storage, loc: storage).to(device)
 
     model.eval()
 
@@ -207,7 +208,7 @@ def display(win, lose, screen):
 
 # Draws text
 def draw_text_middle(text, size, color, screen):
-    font = pygame.font.SysFont('comicsans', size, bold=True)
+    font = pygame.font.SysFont('Arial', size, bold=True)
     label = font.render(text, 1, color)
 
     screen.blit(label, (1400 / 2 - (label.get_width() / 2), 250 - label.get_height() / 2))
