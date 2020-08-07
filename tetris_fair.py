@@ -1,5 +1,4 @@
 import copy
-
 import torch
 from tetris_model import *
 from tetris_agent import *
@@ -11,13 +10,9 @@ class Tetris:
         self.draw = draw
         self.mode = mode
         self.screen = screen
-        self.s_width = 900
-        self.s_height = 700
         self.distance_down = 0
-        self.play_width = 300
-        self.play_height = 600
-        self.top_left_x = (self.s_width - self.play_width) // 4
-        self.top_left_y = self.s_height - self.play_height - 10
+        self.top_left_x = 150
+        self.top_left_y = 90
         self.score = 0
         self.total_pieces_placed = 0
         self.total_lines_cleared = 0
@@ -45,7 +40,7 @@ class Tetris:
         self.area = pygame.Rect(0, 75, 700, 625)
         self.small_area = pygame.Rect(self.top_left_x - 50, self.top_left_y + 100, 400, 660)
         self.initial_grid = [[(0, 0, 0) for x in range(10)] for x in range(20)]
-        draw_title(self.screen, self.label, self.top_left_x, self.play_width)
+        draw_title(self.screen, self.label, self.top_left_x)
 
     def get_held_piece(self):
         if not self.held_piece:
@@ -241,8 +236,7 @@ class Tetris:
                         x, y = shape_pos[i]
                         if y > -1:
                             grid[y][x] = self.current_piece.color
-                    draw_window(self.screen, self.top_left_x, grid, self.play_width,
-                                self.play_height, self.top_left_y)
+                    draw_window(self.screen, self.top_left_x, grid, self.top_left_y)
                     pygame.display.update(self.small_area)
                     self.current_piece.y += 1
                     grid = create_grid(self.locked_positions)
@@ -329,9 +323,9 @@ class Tetris:
             self.draw_stats()
         else:
             self.screen.fill((0, 0, 0), self.area)
-            draw_lines_sent(self.screen, 20, self.top_left_x, self.top_left_y, self.counter_human)
+            draw_lines_sent(self.screen, self.top_left_x, self.top_left_y, self.counter_human)
 
-        draw_window(self.screen, self.top_left_x, grid, self.play_width, self.play_height, self.top_left_y)
+        draw_window(self.screen, self.top_left_x, grid, self.top_left_y)
         draw_next_shape(self.next_piece, self.screen, self.top_left_x, self.label_next_piece, self.top_left_y)
         draw_held_shape(self.held_piece, self.screen, self.top_left_x, self.label_held_piece, self.top_left_y)
 

@@ -3,6 +3,7 @@ import copy
 import torch
 from tetris_model import *
 from tetris_agent import *
+from settings import TetrisSettings
 
 pygame.font.init()
 
@@ -12,10 +13,6 @@ class Tetris:
         # GLOBALS VARS
         self.draw = draw
         self.mode = mode
-        self.s_width = 900
-        self.s_height = 700
-        self.play_width = 300
-        self.play_height = 600
         self.score = 0
         self.total_pieces_placed = 0
         self.total_lines_cleared = 0
@@ -43,9 +40,9 @@ class Tetris:
         self.combo = 0
         self.max_combo = 0
 
-        self.top_left_x = (self.s_width - self.play_width) / 4
-        self.top_left_y = self.s_height - self.play_height - 10
-        draw_title(self.screen, self.label, self.top_left_x, self.play_width)
+        self.top_left_x = 150
+        self.top_left_y = 90
+        draw_title(self.screen, self.label, self.top_left_x)
 
     def get_held_piece(self):
         if not self.held_piece:
@@ -272,9 +269,9 @@ class Tetris:
             self.draw_stats()
         else:
             self.screen.fill((0, 0, 0), area)
-            draw_lines_sent(self.screen, 20, self.top_left_x, self.top_left_y, self.counter_human)
+            draw_lines_sent(self.screen, self.top_left_x, self.top_left_y, self.counter_human)
 
-        draw_window(self.screen, self.top_left_x, grid, self.play_width, self.play_height, self.top_left_y)
+        draw_window(self.screen, self.top_left_x, grid, self.top_left_y)
         draw_next_shape(self.next_piece, self.screen, self.top_left_x, self.label_next_piece, self.top_left_y)
         draw_held_shape(self.held_piece, self.screen, self.top_left_x, self.label_held_piece, self.top_left_y)
         if not self.draw:

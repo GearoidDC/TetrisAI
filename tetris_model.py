@@ -109,8 +109,10 @@ class Piece(object):
               '.....']]
 
         shapes = [S, Z, I, O, J, L, T]
-        shape_colors = [(0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0), (255, 165, 0), (0, 0, 255),
-                        (128, 0, 128)]
+        green, red, cyan, yellow, orange, blue, purple = (0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 255, 0), (
+            255, 165, 0), (0, 0, 255), (128, 0, 128)
+
+        shape_colors = [green, red, cyan, yellow, orange, blue, purple]
         self.x = column
         self.y = row
         self.shape = shapes[index]
@@ -131,13 +133,16 @@ def create_grid(locked_positions):
 
 
 # Draw the grid
-def draw_grid(surface, row, col, sx, sy, play_width, play_height):
+def draw_grid(surface, x_coord, y_coord, play_width, play_height):
+    row = 20
+    column = 10
+    grey = (128, 128, 128)
     for i in range(row):
-        pygame.draw.line(surface, (128, 128, 128), (sx, sy + i * 30),
-                         (sx + play_width, sy + i * 30))  # horizontal lines
-        for j in range(col):
-            pygame.draw.line(surface, (128, 128, 128), (sx + j * 30, sy),
-                             (sx + j * 30, sy + play_height))  # vertical lines
+        pygame.draw.line(surface, grey, (x_coord, y_coord + i * 30),
+                         (x_coord + play_width, y_coord + i * 30))  # horizontal lines
+        for j in range(column):
+            pygame.draw.line(surface, grey, (x_coord + j * 30, y_coord),
+                             (x_coord + j * 30, y_coord + play_height))  # vertical lines
 
 
 # Returns a shuffled seven piece bag
@@ -184,22 +189,25 @@ def valid_space(current_piece, accepted_positions):
     return True
 
 
-def draw_lines_sent(surface, col, sx, sy,lines_sent):
+def draw_lines_sent(surface, x_coord, y_coord, lines_sent):
+    rows = 21
     play_height = 600
+    cyan = (0, 128, 128)
+    grey = (128, 128, 128)
     for line in range(lines_sent):
-        pygame.draw.rect(surface, (0, 128, 128), (sx - 40, 675 - line * 15, 20, 15), 0)
-    for i in range(col):
-        pygame.draw.line(surface, (128, 128, 128), (sx - 40, sy + i * 15 + play_height / 2),
-                         (sx - 20, sy + i * 15 + play_height / 2))  # horizontal lines
+        pygame.draw.rect(surface, cyan, (x_coord - 40, 675 - line * 15, 20, 15), 0)
+    for i in range(rows):
+        pygame.draw.line(surface, grey, (x_coord - 40, y_coord + i * 15 + play_height / 2),
+                         (x_coord - 20, y_coord + i * 15 + play_height / 2))  # horizontal lines
 
-    pygame.draw.line(surface, (128, 128, 128), (sx - 40, sy + play_height / 2),
-                     (sx - 40, sy + play_height))  # vertical lines
-    pygame.draw.line(surface, (128, 128, 128), (sx - 20, sy + play_height / 2),
-                     (sx - 20, sy + play_height))
+    pygame.draw.line(surface, grey, (x_coord - 40, y_coord + play_height / 2),
+                     (x_coord - 40, y_coord + play_height))  # vertical lines
+    pygame.draw.line(surface, grey, (x_coord - 20, y_coord + play_height / 2),
+                     (x_coord - 20, y_coord + play_height))
 
 
 def check_lost(locked_positions):
-    return any(v[1] < 0 for v in locked_positions)
+    return any(coordinate[1] < 0 for coordinate in locked_positions)
 
 
 def clear_rows(grid, locked):
@@ -229,20 +237,23 @@ def clear_rows(grid, locked):
     return lines_cleared
 
 
-def draw_window(surface, position, grid,play_width,play_height,top_left_y):
-
+def draw_window(surface, position, grid, top_left_y):
+    play_width, play_height = 300, 600
     for i in range(len(grid)):
         for j in range(len(grid[i])):
             pygame.draw.rect(surface, grid[i][j], (position + j * 30, top_left_y + i * 30, 30, 30), 0)
 
     # draw grid and border
-    draw_grid(surface, 20, 10, position, top_left_y, play_width, play_height)
+    draw_grid(surface, position, top_left_y, play_width, play_height)
     pygame.draw.rect(surface, (255, 0, 0), (position, top_left_y, play_width, play_height), 5)
 
 
-def draw_held_shape(shape, surface, position, label, sy):
-    sx = position - 150
-    sy = sy + 40
+def draw_held_shape(shape, surface, x_coord, label, y_coord):
+    offset_right = 150
+    block_size = 30
+    x_coord = x_coord - offset_right
+    offset_down = 40
+    y_coord = y_coord + offset_down
     if shape:
         shape.rotation = 0
         shape_layout = shape.shape[shape.rotation % len(shape.shape)]
@@ -251,26 +262,28 @@ def draw_held_shape(shape, surface, position, label, sy):
             row = list(line)
             for j, column in enumerate(row):
                 if column == '0':
-                    pygame.draw.rect(surface, shape.color, (sx + j * 30, sy + i * 30, 30, 30), 0)
+                    pygame.draw.rect(surface, shape.color, (x_coord + j * block_size, y_coord + i * block_size,
+                                                            block_size, block_size), 0)
 
-    surface.blit(label, (sx + 10, sy - 30))
+    surface.blit(label, (x_coord + 10, y_coord - block_size))
 
 
 # Draw next shape
-def draw_next_shape(shape, surface, position, label, top_left_y):
-    sx = position + 300 + 50
-    sy = top_left_y + 600 / 2 - 100
+def draw_next_shape(shape, surface, x_coord, label, y_coord):
+    x_coord = x_coord + 350
+    y_coord = y_coord + 200
     shape_layout = shape.shape[shape.rotation % len(shape.shape)]
 
     for i, line in enumerate(shape_layout):
         row = list(line)
         for j, column in enumerate(row):
             if column == '0':
-                pygame.draw.rect(surface, shape.color, (sx + j * 30, sy + i * 30, 30, 30), 0)
+                pygame.draw.rect(surface, shape.color, (x_coord + j * 30, y_coord + i * 30, 30, 30), 0)
 
-    surface.blit(label, (sx + 10, sy - 30))
+    surface.blit(label, (x_coord + 10, y_coord - 30))
 
 
 # Tetris Title
-def draw_title(surface, label, position, game_width):
-    surface.blit(label, (position + game_width / 2 - (label.get_width() / 2), 30))
+def draw_title(surface, label, position):
+    play_width = 300
+    surface.blit(label, (position + play_width / 2 - (label.get_width() / 2), 30))

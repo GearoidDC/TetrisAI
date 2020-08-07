@@ -11,7 +11,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
-from deep_q_learning import DeepQNetwork
+from DeepQLearning import DeepQNetwork
 from tetris_cheater import Tetris as Cheater
 from tetris_fair import Tetris as Fair
 from collections import deque

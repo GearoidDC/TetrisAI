@@ -4,12 +4,8 @@ from tetris_model import *
 class Tetris:
     def __init__(self, screen):
         self.screen = screen
-        self.s_width = 1400
-        self.s_height = 700
-        self.play_width = 300
-        self.play_height = 600
-        self.top_left_x = (self.s_width - self.play_width) // 1.3
-        self.top_left_y = self.s_height - self.play_height - 10
+        self.top_left_x = 900
+        self.top_left_y = 90
 
         font = pygame.font.SysFont('Arial', 40)
         self.font_small = pygame.font.SysFont('Arial', 20)
@@ -30,7 +26,7 @@ class Tetris:
         self.change_piece = False
         self.run = False
 
-        draw_title(self.screen, self.label, self.top_left_x, self.play_width)
+        draw_title(self.screen, self.label, self.top_left_x)
 
     def get_held_piece(self):
         if self.switch_piece:
@@ -118,8 +114,8 @@ class Tetris:
     def draw_screen(self, grid):
         area = pygame.Rect(self.top_left_x - 150, 75, 700, 625)
         self.screen.fill((0, 0, 0), area)
-        draw_window(self.screen, self.top_left_x, grid, self.play_width, self.play_height, self.top_left_y)
-        draw_lines_sent(self.screen, 20, self.top_left_x, self.top_left_y, self.counter_ai)
+        draw_window(self.screen, self.top_left_x, grid, self.top_left_y)
+        draw_lines_sent(self.screen, self.top_left_x, self.top_left_y, self.counter_ai)
         draw_next_shape(self.next_piece, self.screen, self.top_left_x, self.label_next_piece, self.top_left_y)
         draw_held_shape(self.held_piece, self.screen, self.top_left_x, self.label_held_piece, self.top_left_y)
         pygame.display.update(area)
