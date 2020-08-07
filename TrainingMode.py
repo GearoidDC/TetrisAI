@@ -161,14 +161,6 @@ def train(opt, training_type, number_of_features):
         optimizer.step()
         graph_results(score, opt.num_epochs)
 
-        print("Epoch: {}/{}, Action: {}, Score: {}, Tetrominoes {}, Cleared lines: {}, Max Combo: {}".format(
-            epoch,
-            opt.num_epochs,
-            action,
-            final_score,
-            final_pieces_placed,
-            final_cleared_lines,
-            max_combo))
         writer.add_scalar('Train/Score', final_score, epoch - 1)
         writer.add_scalar('Train/Tetrominoes', final_pieces_placed, epoch - 1)
         writer.add_scalar('Train/Cleared lines', final_cleared_lines, epoch - 1)

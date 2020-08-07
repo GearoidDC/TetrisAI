@@ -116,12 +116,13 @@ class Tetris:
         return False
 
     def draw_screen(self, grid):
-        self.screen.fill((0, 0, 0), (self.top_left_x - 150, 75, 700, 625))
+        area = pygame.Rect(self.top_left_x - 150, 75, 700, 625)
+        self.screen.fill((0, 0, 0), area)
         draw_window(self.screen, self.top_left_x, grid, self.play_width, self.play_height, self.top_left_y)
         draw_lines_sent(self.screen, 20, self.top_left_x, self.top_left_y, self.counter_ai)
         draw_next_shape(self.next_piece, self.screen, self.top_left_x, self.label_next_piece, self.top_left_y)
         draw_held_shape(self.held_piece, self.screen, self.top_left_x, self.label_held_piece, self.top_left_y)
-        pygame.display.update(self.top_left_x - 50, 0, 350, 700)
+        pygame.display.update(area)
 
     def piece_falling(self):
         accepted_positions = self.locked_positions
