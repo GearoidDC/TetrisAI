@@ -1,8 +1,8 @@
 import pygame
 import copy
 import torch
-from TetrisModel import *
-from TetrisAgent import *
+from tetris_model import *
+from tetris_agent import *
 
 pygame.font.init()
 

@@ -1,9 +1,8 @@
 import copy
 
-import pygame
 import torch
-from TetrisModel import *
-from TetrisAgent import *
+from tetris_model import *
+from tetris_agent import *
 
 
 class Tetris:

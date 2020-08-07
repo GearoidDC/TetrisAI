@@ -1,10 +1,10 @@
 import pygame
 import sys
-import Button
-import TrainingSelectionScreen
-import VsSelectionScreen
+import button
+import training_selection_screen
+import vs_selection_screen
 import os
-from Settings import Setting
+from settings import Setting
 
 pygame.init()
 # Centres the screen
@@ -25,9 +25,9 @@ button_height = settings.button_height
 button_centred = screen_centre - button_width / 2
 
 # Creating menu buttons
-train_ai_button = Button.Button(button_colour_off, button_centred, 100, button_width, button_height, 'Train AI')
-play_vs_ai_button = Button.Button(button_colour_off, button_centred, 250, button_width, button_height, 'Play Vs AI')
-quit_button = Button.Button(button_colour_off, button_centred, 400, button_width, button_height, 'Quit')
+train_ai_button = button.Button(button_colour_off, button_centred, 100, button_width, button_height, 'Train AI')
+play_vs_ai_button = button.Button(button_colour_off, button_centred, 250, button_width, button_height, 'Play Vs AI')
+quit_button = button.Button(button_colour_off, button_centred, 400, button_width, button_height, 'Quit')
 
 # Array of Buttons
 buttons = [train_ai_button, play_vs_ai_button, quit_button]
@@ -45,9 +45,9 @@ def main():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if train_ai_button.is_over(pos):
-                    TrainingSelectionScreen.main()
+                    training_selection_screen.main()
                 if play_vs_ai_button.is_over(pos):
-                    VsSelectionScreen.main()
+                    vs_selection_screen.main()
                 if quit_button.is_over(pos):
                     sys.exit()
             if event.type == pygame.MOUSEMOTION:

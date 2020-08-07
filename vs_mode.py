@@ -1,10 +1,10 @@
 import pygame
-import TetrisHuman
-from Settings import Setting
+import tetris_human
+from settings import Setting
 import torch
-import Button
-from TetrisFair import Tetris as Fair
-from TetrisCheater import Tetris as Cheater
+import button
+from tetris_fair import Tetris as Fair
+from tetris_cheater import Tetris as Cheater
 
 # Default Settings
 settings = Setting()
@@ -22,7 +22,7 @@ button_centred = screen_centre - button_width / 2
 def start(screen, saved_path="fair_tetris", mode="vs"):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     font_small = pygame.font.SysFont('Arial', 20)
-    return_button = Button.Button(button_colour_off, 625, 625, 150, 50, 'Return')
+    return_button = button.Button(button_colour_off, 625, 625, 150, 50, 'Return')
     pygame.display.set_caption(saved_path)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
@@ -35,7 +35,7 @@ def start(screen, saved_path="fair_tetris", mode="vs"):
 
     screen.fill((0, 0, 0))
     if mode == "vs":
-        human_tetris = TetrisHuman.Tetris(screen)
+        human_tetris = tetris_human.Tetris(screen)
         draw = False
     else:
         draw = True
@@ -57,9 +57,9 @@ def start(screen, saved_path="fair_tetris", mode="vs"):
 
 
 def vs_mode(return_button, env, model, screen, human_tetris):
-    speed_1 = Button.Button(button_colour_on, 610, 25, 30, 30, '1x', 1)
-    speed_2 = Button.Button(button_colour_off, 650, 25, 30, 30, '2x', 2)
-    speed_3 = Button.Button(button_colour_off, 690, 25, 30, 30, '3x', 3)
+    speed_1 = button.Button(button_colour_on, 610, 25, 30, 30, '1x', 1)
+    speed_2 = button.Button(button_colour_off, 650, 25, 30, 30, '2x', 2)
+    speed_3 = button.Button(button_colour_off, 690, 25, 30, 30, '3x', 3)
     buttons = [speed_1, speed_2, speed_3]
     clock = pygame.time.Clock()
     fall_time = 0
@@ -188,8 +188,8 @@ def ai(env, model, holder):
 # End game display
 def display(win, lose, screen):
     pygame.draw.rect(screen, dark_grey, (1400 / 2 - 200, 200, 400, 300), 0)
-    play_again_button = Button.Button(button_colour_off, 525, 300, 350, 50, 'Play Again?')
-    selection_menu_button = Button.Button(button_colour_off, 525, 400, 350, 50, 'Selection Menu')
+    play_again_button = button.Button(button_colour_off, 525, 300, 350, 50, 'Play Again?')
+    selection_menu_button = button.Button(button_colour_off, 525, 400, 350, 50, 'Selection Menu')
     if win and lose:
         end_text = "Draw"
     elif win:

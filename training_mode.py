@@ -3,7 +3,7 @@ import os
 import shutil
 from random import random, randint, sample
 import pygame
-import Button
+import button
 import matplotlib
 import matplotlib.backends.backend_agg as agg
 import pylab
@@ -11,9 +11,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
-from DeepQLearning import DeepQNetwork
-from TetrisCheater import Tetris as Cheater
-from TetrisFair import Tetris as Fair
+from deep_q_learning import DeepQNetwork
+from tetris_cheater import Tetris as Cheater
+from tetris_fair import Tetris as Fair
 from collections import deque
 matplotlib.use("Agg")
 
@@ -77,7 +77,7 @@ def train(opt, training_type, number_of_features):
     replay_memory = deque(maxlen=opt.replay_memory_size)
     epoch = 0
     score = []
-    return_button = Button.Button((61, 97, 128), 575, 625, 200, 50, 'Return')
+    return_button = button.Button((61, 97, 128), 575, 625, 200, 50, 'Return')
 
     pygame.display.flip()
     while epoch < opt.num_epochs:
@@ -202,7 +202,7 @@ def graph_results(score, length):
 
 def display(screen):
     pygame.draw.rect(screen, (71, 73, 74), (1400 / 2 - 200, 200, 400, 300), 0)
-    selection_menu_button = Button.Button((61, 97, 128), 525, 400, 350, 50, 'Selection Menu')
+    selection_menu_button = button.Button((61, 97, 128), 525, 400, 350, 50, 'Selection Menu')
     draw_text_middle("Training Complete", 40, (255, 255, 255), screen)
     pygame.display.update()
     while True:

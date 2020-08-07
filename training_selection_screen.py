@@ -1,8 +1,8 @@
 import pygame
 import sys
-import Button
-import TrainingMode
-from Settings import Setting
+import button
+import training_mode
+from settings import Setting
 
 # Default Settings
 settings = Setting()
@@ -17,11 +17,11 @@ button_height = settings.button_height
 button_centred = screen_centre - button_width/2
 
 # Creating menu buttons
-play_vs_cheater_ai_button = Button.Button(button_colour_off, button_centred, 100,
+play_vs_cheater_ai_button = button.Button(button_colour_off, button_centred, 100,
                                           button_width, button_height, 'Train Cheater AI')
-play_vs_fair_ai_button = Button.Button(button_colour_off, button_centred, 250,
+play_vs_fair_ai_button = button.Button(button_colour_off, button_centred, 250,
                                        button_width, button_height, 'Train Fair AI')
-return_button = Button.Button(button_colour_off, button_centred, 400, button_width, button_height, 'Return')
+return_button = button.Button(button_colour_off, button_centred, 400, button_width, button_height, 'Return')
 
 # Array of Buttons
 buttons = [play_vs_cheater_ai_button, play_vs_fair_ai_button, return_button]
@@ -40,9 +40,9 @@ def main():
             pos = pygame.mouse.get_pos()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if play_vs_cheater_ai_button.is_over(pos):
-                    go = TrainingMode.main("cheater", 4)
+                    go = training_mode.main("cheater", 4)
                 elif play_vs_fair_ai_button.is_over(pos):
-                    go = TrainingMode.main("fair", 5)
+                    go = training_mode.main("fair", 5)
                 elif return_button.is_over(pos):
                     go = False
             if event.type == pygame.MOUSEMOTION:

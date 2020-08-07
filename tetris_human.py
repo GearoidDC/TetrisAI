@@ -1,4 +1,4 @@
-from TetrisModel import *
+from tetris_model import *
 
 
 class Tetris:
