@@ -24,6 +24,7 @@ class Tetris:
         self.current_piece = self.bag.pop()
         self.next_piece = self.bag.pop()
         self.held_piece = []
+        self.combo = 0
 
         self.switch_piece = True
         self.change_piece = False
@@ -50,6 +51,7 @@ class Tetris:
         self.locked_positions = {}
         self.counter_ai = 0
         self.counter_human = 0
+        self.combo = 0
         self.bag = get_shapes()
         self.current_piece = self.bag.pop()
         self.next_piece = self.bag.pop()
@@ -141,9 +143,18 @@ class Tetris:
         if not self.bag:
             self.bag = get_shapes()
 
-    def get_lines(self, grid):
+    def get_score(self, grid):
         counter_human = 0
         counter_human += clear_rows(grid, self.locked_positions)
+        # scoring system
+        if counter_human > 0:
+            self.combo = (self.combo + 1)
+        else:
+            self.combo = 0
+        if self.combo > 1:
+            counter_human = counter_human
+        elif counter_human > 0:
+            counter_human = counter_human - 1
         # Adds a row and moves rows down
         if self.counter_ai > counter_human:
             self.counter_ai = self.counter_ai - counter_human
@@ -168,7 +179,7 @@ class Tetris:
         landed = False
         self.counter_ai += lines
         grid = create_grid(self.locked_positions)
-        lines_sent = 0
+        score = 0
         if movement == 0:
             landed = self.piece_falling()
         elif movement > 0:
@@ -181,8 +192,9 @@ class Tetris:
                 grid[y][x] = self.current_piece.color
         if landed:
             self.piece_landed()
-            lines_sent = self.get_lines(grid)
+            score = self.get_score(grid)
+
         self.draw_screen(grid)
         if check_lost(self.locked_positions):
             self.run = True
-        return self.run, lines_sent
+        return self.run, score

@@ -43,7 +43,7 @@ class Tetris:
         self.combo = 0
         self.max_combo = 0
 
-        self.top_left_x = (self.s_width - self.play_width) // 4
+        self.top_left_x = (self.s_width - self.play_width) / 4
         self.top_left_y = self.s_height - self.play_height - 10
         draw_title(self.screen, self.label, self.top_left_x, self.play_width)
 
@@ -160,6 +160,7 @@ class Tetris:
         self.current_piece = self.bag.pop()
         self.next_piece = self.bag.pop()
         self.held_piece = []
+        self.last_score = self.score
         self.score = 0
         self.total_pieces_placed = 0
         self.run = False
@@ -170,7 +171,7 @@ class Tetris:
     def draw_stats(self):
         area = pygame.Rect(0, 75, 800, 600)
         self.screen.fill((0, 0, 0), area)
-        label = self.font_small.render(f'Total Lines cleared = {self.total_lines_cleared}', 1, (255, 255, 255))
+        label = self.font_small.render(f'Lines cleared = {self.total_lines_cleared}', 1, (255, 255, 255))
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y))
         label = self.font_small.render(f'Pieces placed = {self.total_pieces_placed}', 1, (255, 255, 255))
         self.screen.blit(label, (self.top_left_x + 400, self.top_left_y + 20))
@@ -209,9 +210,7 @@ class Tetris:
                 grid[y][x] = self.current_piece.color
         # IF PIECE HIT GROUND
         lines_cleared = 0
-        line_placed = 0
         if self.change_piece:
-            line_placed = 1
             self.total_pieces_placed += 1
             for pos in shape_pos:
                 p = (pos[0], pos[1])
@@ -226,44 +225,49 @@ class Tetris:
                 self.run = True
 
             if not self.run:
-                # call four times to check for multiple clear rows
                 self.counter_ai += clear_rows(grid, self.locked_positions)
                 self.score += self.counter_ai
                 self.total_lines_cleared += self.counter_ai
                 lines_cleared = self.counter_ai
                 self.counter_ai = 0
-                if lines_cleared > self.counter_human:
-                    lines_cleared = lines_cleared - self.counter_human
-                elif lines_cleared == self.counter_human:
-                    lines_cleared = 0
-                    self.counter_human = 0
-                elif lines_cleared < self.counter_human:
-                    self.counter_human = self.counter_human - lines_cleared
-                # Adds a row and moves rows up
-                while self.counter_human > 0:
-                    for j in range(10):
-                        for i in range(20):
-                            if (j, i) in self.locked_positions:
-                                self.locked_positions[j, i - self.counter_human] = self.locked_positions[j, i]
-                                del self.locked_positions[j, i]
-                    rows_to = random.sample(range(10), 9)
-                    for x in range(self.counter_human):
-                        for r in rows_to:
-                            self.locked_positions[r, 19 - x] = (169, 169, 169)
-                    self.counter_human = 0
-        if lines_cleared > 0:
-            self.combo = (self.combo + 1)
-        else:
-            self.combo = 0
+                if lines_cleared > 0:
+                    self.combo = (self.combo + 1)
+                else:
+                    self.combo = 0
+                if self.combo > 1:
+                    lines_cleared = lines_cleared
+                elif lines_cleared > 0:
+                    lines_cleared = lines_cleared - 1
+
+                if not self.draw:
+                    if lines_cleared > self.counter_human:
+                        lines_cleared = lines_cleared - self.counter_human
+                    elif lines_cleared == self.counter_human:
+                        lines_cleared = 0
+                        self.counter_human = 0
+                    elif lines_cleared < self.counter_human:
+                        self.counter_human = self.counter_human - lines_cleared
+                if self.mode != "training":
+                    # Adds a row and moves rows up
+                    if self.counter_human > 0:
+                        for j in range(10):
+                            for i in range(20):
+                                if (j, i) in self.locked_positions:
+                                    self.locked_positions[j, i - self.counter_human] = self.locked_positions[j, i]
+                                    del self.locked_positions[j, i]
+                        lines_sent = random.sample(range(10), 9)
+                        for x in range(self.counter_human):
+                            for r in lines_sent:
+                                self.locked_positions[r, 19 - x] = (169, 169, 169)
+                        self.counter_human = 0
+
         if self.combo > self.max_combo:
             self.max_combo = self.combo
-        score = 1 * line_placed + pow(lines_cleared, 2) * 10 + self.combo * 5
+        score = 1 + lines_cleared ** 2
         self.score += score
         area = pygame.Rect(0, 75, 700, 600)
-        if self.run or (lines_sent == 1 and self.mode == "train"):
-            self.last_score = self.score
-            if self.top_score < self.score:
-                self.top_score = self.score
+        if self.top_score < self.score:
+            self.top_score = self.score
         if self.draw:
             self.draw_stats()
         else:
@@ -275,8 +279,7 @@ class Tetris:
         draw_held_shape(self.held_piece, self.screen, self.top_left_x, self.label_held_piece, self.top_left_y)
         if not self.draw:
             pygame.display.update(area)
-
-        if self.mode == "train":
+        if self.mode == "training":
             out = score
         else:
             out = lines_cleared

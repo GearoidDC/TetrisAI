@@ -24,7 +24,6 @@ def start(screen, saved_path="fair_tetris", mode="vs"):
     font_small = pygame.font.SysFont('Arial', 20)
     return_button = Button.Button(button_colour_off, 625, 625, 150, 50, 'Return')
     pygame.display.set_caption(saved_path)
-    print(torch.cuda.is_available())
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
     else:

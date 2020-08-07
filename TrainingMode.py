@@ -39,7 +39,7 @@ def get_args(training_type):
     elif training_type == "fair":
         parser.add_argument("--num_decay_epochs", type=float, default=1500)
         parser.add_argument("--num_epochs", type=int, default=2000)
-        parser.add_argument("--replay_memory_size", type=int, default=10000,
+        parser.add_argument("--replay_memory_size", type=int, default=20000,
                             help="Number of epoches between testing phases")
 
     args = parser.parse_args()
@@ -48,7 +48,6 @@ def get_args(training_type):
 
 def train(opt, training_type, number_of_features):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(torch.cuda.is_available())
     font_small = pygame.font.SysFont('Arial', 20)
     clock = pygame.time.Clock()
     if torch.cuda.is_available():
@@ -63,10 +62,12 @@ def train(opt, training_type, number_of_features):
     screen = pygame.display.set_mode((1400, 700))
     screen.fill((0, 0, 0))
 
+    # Modes
     if training_type == "fair":
         env = Fair(screen, "train", True)
     else:
         env = Cheater(screen, "train", True)
+
     model = DeepQNetwork(number_of_features).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
     criterion = nn.MSELoss()
@@ -75,7 +76,6 @@ def train(opt, training_type, number_of_features):
 
     replay_memory = deque(maxlen=opt.replay_memory_size)
     epoch = 0
-
     score = []
     return_button = Button.Button((61, 97, 128), 575, 625, 200, 50, 'Return')
 
@@ -181,6 +181,7 @@ def train(opt, training_type, number_of_features):
     display(screen)
 
 
+# Draws graph
 def graph_results(score, length):
     fig = pylab.figure(figsize=[4, 4], dpi=90)
     ax = fig.gca()
