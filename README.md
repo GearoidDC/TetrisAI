@@ -25,6 +25,10 @@ Idea behind it and what it does
 
 ### Instructions:
 
+**How to Start:**
+
+Run the main_menu file
+
 Explain the menus
 
 **Controls for vs mode:**

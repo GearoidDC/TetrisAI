@@ -11,54 +11,48 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
-from DeepQLearning import DeepQNetwork
+from deep_q_learning import DeepQNetwork
 from tetris_cheater import Tetris as Cheater
 from tetris_fair import Tetris as Fair
 from collections import deque
 matplotlib.use("Agg")
 
 
-def get_args(training_type):
+def get_args():
     parser = argparse.ArgumentParser(
         """Implementation of Deep Q Network to play Tetris""")
-    parser.add_argument("--batch_size", type=int, default=512, help="The number of images per batch")
-    parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--batch_size", type=int, default=512)
+    parser.add_argument("--lr", type=float, default=5e-4)
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--initial_epsilon", type=float, default=1)
-    parser.add_argument("--final_epsilon", type=float, default=1e-3)
+    parser.add_argument("--final_epsilon", type=float, default=5e-4)
     parser.add_argument("--saved_path", type=str, default="trained_models")
     parser.add_argument("--log_path", type=str, default="tensorboard")
-    parser.add_argument("--save_interval", type=int, default=500)
-
-    if training_type == "cheater":
-        parser.add_argument("--num_decay_epochs", type=float, default=2000)
-        parser.add_argument("--num_epochs", type=int, default=3000)
-        parser.add_argument("--replay_memory_size", type=int, default=20000,
-                            help="Number of epoches between testing phases")
-
-    elif training_type == "fair":
-        parser.add_argument("--num_decay_epochs", type=float, default=1500)
-        parser.add_argument("--num_epochs", type=int, default=2000)
-        parser.add_argument("--replay_memory_size", type=int, default=20000,
-                            help="Number of epoches between testing phases")
+    parser.add_argument("--save_interval", type=int, default=1000)
+    parser.add_argument("--num_decay_epochs", type=float, default=2000)
+    parser.add_argument("--num_epochs", type=int, default=3000)
+    parser.add_argument("--replay_memory_size", type=int, default=30000)
 
     args = parser.parse_args()
     return args
 
 
 def train(opt, training_type, number_of_features):
+    # Checks if the device has a supported gpu otherwise use cpu
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    font_small = pygame.font.SysFont('Arial', 20)
-    clock = pygame.time.Clock()
+
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
     else:
         torch.manual_seed(123)
     if os.path.isdir(opt.log_path):
         shutil.rmtree(opt.log_path)
+
+    # Creates a folder for the given log path
     os.makedirs(opt.log_path)
     writer = SummaryWriter(opt.log_path)
 
+    # Set and refresh screen
     screen = pygame.display.set_mode((1400, 700))
     screen.fill((0, 0, 0))
 
@@ -68,13 +62,25 @@ def train(opt, training_type, number_of_features):
     else:
         env = Cheater(screen, "train", True)
 
+    # model is the neural network
     model = DeepQNetwork(number_of_features).to(device)
+    # Optimises the model using the learning rate
     optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
+    # measures the mean squared error between elements
     criterion = nn.MSELoss()
-
+    # Gets the default states of the environment
     state = env.reset().to(device)
 
+    # Limits amount of moves made
+    steps = 0
+    max_step = 2000
+
+    font_small = pygame.font.SysFont('Arial', 20)
+    clock = pygame.time.Clock()
+
+    # Setups abound queue to the length of the reply memory size
     replay_memory = deque(maxlen=opt.replay_memory_size)
+
     epoch = 0
     score = []
     return_button = button.Button((61, 97, 128), 575, 625, 200, 50, 'Return')
@@ -82,7 +88,7 @@ def train(opt, training_type, number_of_features):
     pygame.display.flip()
     while epoch < opt.num_epochs:
         next_steps = env.get_next_states()
-        # Exploration or exploitation
+        # Decides to do exploration or exploitation
         epsilon = opt.final_epsilon + (max(opt.num_decay_epochs - epoch, 0) * (
                 opt.initial_epsilon - opt.final_epsilon) / opt.num_decay_epochs)
         u = random()
@@ -90,9 +96,12 @@ def train(opt, training_type, number_of_features):
         next_actions, next_states = zip(*next_steps.items())
         next_states = torch.stack(next_states).to(device)
 
+        # Evaluates model
         model.eval()
+
         with torch.no_grad():
             predictions = model(next_states)[:, 0]
+        # Trains model
         model.train()
         if random_action:
             index = randint(0, len(next_steps) - 1)
@@ -102,7 +111,9 @@ def train(opt, training_type, number_of_features):
         next_state = next_states[index, :].to(device)
         action = next_actions[index]
 
+        # Gets next steps from environment
         reward, done = env.step(action)
+        steps = steps + 1
 
         replay_memory.append([state, reward, next_state, done])
         for event in pygame.event.get():
@@ -126,12 +137,12 @@ def train(opt, training_type, number_of_features):
         screen.blit(fps, (10, 75))
         clock.tick(200)
         pygame.display.update(area)
-        if done or (env.total_pieces_placed >= 200):
+        if done or (max_step <= steps):
             final_score = env.score
             final_pieces_placed = env.total_pieces_placed
             final_cleared_lines = env.total_lines_cleared
-            max_combo = env.max_combo
             state = env.reset().to(device)
+            steps = 0
         else:
             state = next_state
             continue
@@ -200,6 +211,7 @@ def graph_results(score, length):
     pylab.close('all')
 
 
+# Draws notice at the end of training
 def display(screen):
     pygame.draw.rect(screen, (71, 73, 74), (1400 / 2 - 200, 200, 400, 300), 0)
     selection_menu_button = button.Button((61, 97, 128), 525, 400, 350, 50, 'Selection Menu')
@@ -223,6 +235,7 @@ def display(screen):
         pygame.display.update()
 
 
+# Draws centred text
 def draw_text_middle(text, size, color, screen):
     font = pygame.font.SysFont('Arial', size, bold=True)
     label = font.render(text, 1, color)
@@ -231,6 +244,6 @@ def draw_text_middle(text, size, color, screen):
 
 
 def main(training_type, number_of_features):
-    opt = get_args(training_type)
+    opt = get_args()
     train(opt, training_type, number_of_features)
     return True

@@ -1,7 +1,11 @@
+"""
+@author: Viet Nguyen <nhviet1009@gmail.com>
+https://github.com/uvipen/Tetris-deep-Q-learning-pytorch
+"""
+
 import torch.nn as nn
 
 
-# Neural network
 class DeepQNetwork(nn.Module):
     def __init__(self, number_of_features=4):
         super(DeepQNetwork, self).__init__()

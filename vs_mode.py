@@ -21,16 +21,15 @@ button_centred = screen_centre - button_width / 2
 
 def start(screen, saved_path="fair_tetris", mode="vs"):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    font_small = pygame.font.SysFont('Arial', 20)
-    return_button = button.Button(button_colour_off, 625, 625, 150, 50, 'Return')
+
     pygame.display.set_caption(saved_path)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(123)
     else:
         torch.manual_seed(123)
 
+    # Loads the model
     model = torch.load(("trained_models/{}".format(saved_path)), map_location=lambda storage, loc: storage).to(device)
-
     model.eval()
 
     screen.fill((0, 0, 0))
@@ -46,7 +45,8 @@ def start(screen, saved_path="fair_tetris", mode="vs"):
     env.reset()
 
     pygame.display.update()
-
+    font_small = pygame.font.SysFont('Arial', 20)
+    return_button = button.Button(button_colour_off, 625, 625, 150, 50, 'Return')
     # Runs vs mode or solo mode
     if mode == "vs":
         vs_mode(return_button, env, model, screen, human_tetris)
@@ -76,6 +76,7 @@ def vs_mode(return_button, env, model, screen, human_tetris):
             if event.type == pygame.QUIT:
                 pygame.display.quit()
                 quit()
+            # User controls
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     lost, human_lines = human_tetris.main(1)
@@ -108,6 +109,9 @@ def vs_mode(return_button, env, model, screen, human_tetris):
         if human_lines > 0:
             holder += human_lines
             human_lines = 0
+        if holder > 0:
+            env.lines(holder)
+            holder = 0
         if (ai_speed / 2000) * speed >= fall_speed:
             reward, won = ai(env, model, holder)
             holder = 0
@@ -223,7 +227,7 @@ def display(win, lose, screen):
         pygame.display.update()
 
 
-# Draws text
+# Draws centred text
 def draw_text_middle(text, size, color, screen):
     font = pygame.font.SysFont('Arial', size, bold=True)
     label = font.render(text, 1, color)

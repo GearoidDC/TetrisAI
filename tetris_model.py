@@ -5,7 +5,7 @@ import pygame
 # Creates a Tetris Piece object
 class Piece(object):
     def __init__(self, column, row, index):
-        # SHAPE FORMATS
+        # Piece formats
         S = [['.....',
               '.....',
               '..00.',
@@ -136,13 +136,14 @@ def create_grid(locked_positions):
 def draw_grid(surface, x_coord, y_coord, play_width, play_height):
     row = 20
     column = 10
+    block_size = 30
     grey = (128, 128, 128)
     for i in range(row):
-        pygame.draw.line(surface, grey, (x_coord, y_coord + i * 30),
-                         (x_coord + play_width, y_coord + i * 30))  # horizontal lines
+        pygame.draw.line(surface, grey, (x_coord, y_coord + i * block_size),
+                         (x_coord + play_width, y_coord + i * block_size))  # horizontal lines
         for j in range(column):
-            pygame.draw.line(surface, grey, (x_coord + j * 30, y_coord),
-                             (x_coord + j * 30, y_coord + play_height))  # vertical lines
+            pygame.draw.line(surface, grey, (x_coord + j * block_size, y_coord),
+                             (x_coord + j * block_size, y_coord + play_height))  # vertical lines
 
 
 # Returns a shuffled seven piece bag
@@ -171,6 +172,7 @@ def convert_shape_format(current_piece):
     return positions
 
 
+# Returns if the passed spaces are valid to move into
 def valid_space(current_piece, accepted_positions):
     formatted = convert_shape_format(current_piece)
 
@@ -189,6 +191,7 @@ def valid_space(current_piece, accepted_positions):
     return True
 
 
+# Draws the lines sent by the opponent
 def draw_lines_sent(surface, x_coord, y_coord, lines_sent):
     rows = 21
     play_height = 600
@@ -206,10 +209,12 @@ def draw_lines_sent(surface, x_coord, y_coord, lines_sent):
                      (x_coord - 20, y_coord + play_height))
 
 
+# Returns if the game is lost
 def check_lost(locked_positions):
     return any(coordinate[1] < 0 for coordinate in locked_positions)
 
 
+# Returns how many rows are cleared and clears the lines
 def clear_rows(grid, locked):
     lines_cleared = 0
     i = 0
@@ -237,17 +242,21 @@ def clear_rows(grid, locked):
     return lines_cleared
 
 
+# Draws the basic board of the game
 def draw_window(surface, position, grid, top_left_y):
     play_width, play_height = 300, 600
+    block_size = 30
     for i in range(len(grid)):
         for j in range(len(grid[i])):
-            pygame.draw.rect(surface, grid[i][j], (position + j * 30, top_left_y + i * 30, 30, 30), 0)
+            pygame.draw.rect(surface, grid[i][j], (position + j * block_size, top_left_y + i * block_size, block_size,
+                                                   block_size), 0)
 
     # draw grid and border
     draw_grid(surface, position, top_left_y, play_width, play_height)
     pygame.draw.rect(surface, (255, 0, 0), (position, top_left_y, play_width, play_height), 5)
 
 
+# Draws the held shape on the screen
 def draw_held_shape(shape, surface, x_coord, label, y_coord):
     offset_right = 150
     block_size = 30
@@ -268,7 +277,7 @@ def draw_held_shape(shape, surface, x_coord, label, y_coord):
     surface.blit(label, (x_coord + 10, y_coord - block_size))
 
 
-# Draw next shape
+# Draws next shape on the screen
 def draw_next_shape(shape, surface, x_coord, label, y_coord):
     x_coord = x_coord + 350
     y_coord = y_coord + 200
@@ -283,7 +292,7 @@ def draw_next_shape(shape, surface, x_coord, label, y_coord):
     surface.blit(label, (x_coord + 10, y_coord - 30))
 
 
-# Tetris Title
+# Draws the title for the board
 def draw_title(surface, label, position):
     play_width = 300
     surface.blit(label, (position + play_width / 2 - (label.get_width() / 2), 30))
