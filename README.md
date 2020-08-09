@@ -1,8 +1,5 @@
 # Tetris Agent GUI
 
-### Brief
-
-Idea behind it and what it does
 
 ### Features Used:
 
@@ -27,9 +24,8 @@ Idea behind it and what it does
 
 **How to Start:**
 
-Run the main_menu file
+Run the main_menu.exe file which is contained in dist/main_menu
 
-Explain the menus
 
 **Controls for vs mode:**
 
