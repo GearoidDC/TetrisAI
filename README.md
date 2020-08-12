@@ -24,8 +24,20 @@
 
 **How to Start:**
 
+For packaged file:
+
 Run the main_menu.exe file which is contained in dist/main_menu
 
+For github file:
+
+Libraries used:
+
+* Python 3.8.5
+* Pytorch 1.60
+* Pygame 1.9.6
+* Tensorboard 2.2.1
+* Numpy 1.19.1
+* Matplotlib 3.2.2
 
 **Controls for vs mode:**
 
