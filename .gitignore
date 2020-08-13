@@ -1,8 +1,8 @@
 # Default ignored files
 /shelf/
 /workspace.xml
-_pycache_/
-
-build/
-dist/
-tensorboard/
+_pycache_
+build
+dist
+tensorboard
+.idea
